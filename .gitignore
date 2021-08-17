@@ -1,0 +1,9 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+target/
+.flattened-pom.xml
+dependency-reduced-pom.xml
