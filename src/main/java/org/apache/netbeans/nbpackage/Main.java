@@ -18,13 +18,154 @@
  */
 package org.apache.netbeans.nbpackage;
 
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import picocli.CommandLine;
+
 /**
- *
+ * Entry point for command line usage.
  */
 public class Main {
 
+    /**
+     * Main entry point for command line usage.
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
-        System.out.println("Hello World");
+        var cmd = new CommandLine(new Launcher());
+        cmd.setResourceBundle(NBPackage.MESSAGES);
+        int ret = cmd.execute(args);
+        System.exit(ret);
+    }
+
+    @CommandLine.Command(mixinStandardHelpOptions = true)
+    private static class Launcher implements Callable<Integer> {
+
+        @CommandLine.Option(names = {"-t", "--type"},
+                descriptionKey = "option.type.description",
+                completionCandidates = TypesCandidates.class
+        )
+        private String packageType;
+
+        @CommandLine.Option(names = {"-i", "--input"},
+                descriptionKey = "option.input.description")
+        private Path input;
+
+        @CommandLine.Option(names = {"--input-image"},
+                descriptionKey = "option.inputimage.description")
+        private Path inputImage;
+
+        @CommandLine.Option(names = "--build-file",
+                descriptionKey = "option.buildfile.description")
+        private List<Path> buildFiles;
+
+        @CommandLine.Option(names = {"-o", "--output"},
+                descriptionKey = "option.output.description")
+        private Path output;
+
+        @CommandLine.Option(names = {"-c", "--config"},
+                descriptionKey = "option.config.description")
+        private Path config;
+
+        @CommandLine.Option(names = {"--save-config"},
+                descriptionKey = "option.saveconfig.description")
+        private Path configOut;
+
+        @CommandLine.Option(names = {"--image-only"},
+                descriptionKey = "option.imageonly.description")
+        private boolean imageOnly;
+
+        @CommandLine.Option(names = {"-v", "--verbose"},
+                descriptionKey = "option.verbose.description")
+        private boolean verbose;
+
+        @CommandLine.Option(names = {"-P"},
+                descriptionKey = "option.property.description")
+        private Map<String, String> options;
+
+        @Override
+        public Integer call() throws Exception {
+            if (input == null && inputImage == null && configOut == null) {
+                warning(NBPackage.MESSAGES.getString("message.notasks"));
+                return 1;
+            }
+            if (input != null && inputImage != null) {
+                warning(NBPackage.MESSAGES.getString("message.inputandimage"));
+                return 2;
+            }
+            var cb = Configuration.builder();
+            if (config != null) {
+                cb.load(config.toAbsolutePath());
+            }
+            if (packageType != null && !packageType.isBlank()) {
+                cb.set(NBPackage.PACKAGE_TYPE, packageType);
+            }
+
+            if (options != null && !options.isEmpty()) {
+                options.forEach((key, value) -> {
+                    var opt = NBPackage.options()
+                            .filter(o -> o.key().equals(key))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException(key));
+                    cb.set(opt, value);
+                });
+            }
+
+            var conf = cb.build();
+
+            if (configOut != null) {
+                NBPackage.writeFullConfiguration(conf, configOut.toAbsolutePath());
+            }
+
+            Path dest = output == null ? Path.of("").toAbsolutePath() : output.toAbsolutePath();
+
+            if (input != null) {
+                if (imageOnly) {
+                    NBPackage.createImage(input.toAbsolutePath(), conf, dest);
+                } else {
+                    NBPackage.createPackage(input.toAbsolutePath(), conf, dest);
+                }
+            } else if (inputImage != null) {
+                List<Path> extras;
+                if (buildFiles != null && !buildFiles.isEmpty()) {
+                    extras = List.copyOf(buildFiles.stream()
+                            .map(Path::toAbsolutePath)
+                            .collect(Collectors.toList()));
+                } else {
+                    extras = List.of();
+                }
+                NBPackage.packageImage(inputImage.toAbsolutePath(), extras, conf, dest);
+            }
+
+            return 0;
+        }
+
+        private void info(String msg) {
+            System.out.println(msg);
+        }
+
+        private void warning(String msg) {
+            var ansiMsg = CommandLine.Help.Ansi.AUTO.string(
+                    "@|bold,red " + msg + "|@"
+            );
+            System.out.println(ansiMsg);
+        }
+
+    }
+
+    private static class TypesCandidates implements Iterable<String> {
+
+        @Override
+        public Iterator<String> iterator() {
+            return NBPackage.packagers().map(Packager::name).sorted().iterator();
+        }
+
     }
 
 }

@@ -17,7 +17,11 @@
  * under the License.
  */
 module org.apache.netbeans.nbpackage {
+    
+    requires info.picocli;
+    requires org.apache.commons.compress;
+    
+    opens org.apache.netbeans.nbpackage to info.picocli;
 
     
-
 }
