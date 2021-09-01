@@ -18,18 +18,195 @@
  */
 package org.apache.netbeans.nbpackage;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 /**
  * Provide access to configuration, environment and utilities for packager
  * tasks. An execution context is valid only for execution of a single task.
  */
-public class ExecutionContext {
+public final class ExecutionContext {
 
+    private static final String TOKEN_IMAGE_DIR = "IMAGE_DIR";
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+
+    private final Packager packager;
+    private final Path input;
+    private final Path destination;
     private final Configuration configuration;
+    private final boolean imageOnly;
 
-    ExecutionContext(Configuration config) {
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    private Path imagePath;
+    private List<Path> buildFiles;
+
+    /**
+     * Constructor used from NBPackage createPackage and createImage.
+     */
+    ExecutionContext(Packager packager,
+            Path input,
+            Configuration config,
+            Path destination,
+            boolean imageOnly) {
+        this.packager = packager;
         this.configuration = config;
+        this.input = input;
+        this.imagePath = null;
+        this.buildFiles = null;
+        this.destination = destination;
+        this.imageOnly = imageOnly;
+    }
+
+    /**
+     * Constructor used from NBPackage packageImage.
+     */
+    ExecutionContext(Packager packager,
+            Path inputImage,
+            List<Path> buildFiles,
+            Configuration configuration,
+            Path destination) {
+        this.packager = packager;
+        this.input = null;
+        this.imagePath = inputImage;
+        this.buildFiles = buildFiles;
+        this.configuration = configuration;
+        this.destination = destination;
+        this.imageOnly = false;
+    }
+
+    /**
+     * Get the input file. May be null if packaging an image.
+     *
+     * @return input file or null
+     */
+    public Path input() {
+        return input;
+    }
+
+    /**
+     * Get the path to the image. May be null.
+     *
+     * @return image path
+     */
+    public Path image() {
+        return imagePath;
+    }
+
+    /**
+     * Get any additional build files. May be null.
+     *
+     * @return additional build files
+     */
+    public List<Path> buildFiles() {
+        return buildFiles == null ? null : List.copyOf(buildFiles);
+    }
+
+    /**
+     * Get the destination directory. Never null.
+     *
+     * @return destination path
+     */
+    public Path destination() {
+        return destination;
+    }
+
+    /**
+     * Execute the given external process. The process will be executed using
+     * the current working directory. If {@link #isVerbose()} then process
+     * output streams will be routed to the info handler, else they will be
+     * discarded.
+     *
+     * @param command command line
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void exec(List<String> command) throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        boolean showOutput = isVerbose();
+        if (showOutput) {
+            pb.redirectErrorStream(true);
+        } else {
+            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+        }
+        Process p = pb.start();
+        if (showOutput) {
+            var info = infoHandler();
+            var warning = warningHandler();
+            executor.submit(() -> {
+                try (var in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                    in.lines().forEachOrdered(info);
+                } catch (IOException ex) {
+                    warning.accept(ex.getClass().getSimpleName());
+                }
+
+            });
+        }
+        p.waitFor();
+    }
+
+    /**
+     * Execute and get the output of the given external process. The process
+     * will be executed using the current working directory. If
+     * {@link #isVerbose()} then the error stream of the process will be routed
+     * to the info handler, else it will be discarded.
+     * <p>
+     * Implementation note : execution will be routed to a temporary file and
+     * read on process exit.
+     *
+     * @param command command line
+     * @return output of command
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String execAndGetOutput(List<String> command) throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        boolean showOutput = isVerbose();
+        Path tmp = Files.createTempFile("nbpackage", ".tmp");
+        pb.redirectOutput(tmp.toFile());
+        if (!showOutput) {
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+        }
+        Process p = pb.start();
+        if (showOutput) {
+            var info = configuration.infoHandler();
+            var warning = configuration.warningHandler();
+            executor.submit(() -> {
+                try (var in = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                    in.lines().forEachOrdered(info);
+                } catch (IOException ex) {
+                    warning.accept(ex.getClass().getSimpleName());
+                }
+
+            });
+        }
+        p.waitFor();
+        String out = Files.readString(tmp);
+        Files.delete(tmp);
+        return out;
+    }
+
+    /**
+     * Split the given command line string into individual command line tokens.
+     *
+     * @param command commend line string
+     * @return tokenized command line
+     */
+    public List<String> splitCommandLine(String command) {
+        return parseParameters(command);
     }
 
     /**
@@ -48,10 +225,14 @@ public class ExecutionContext {
     public <T> Optional<T> getValue(Option<T> option) {
         var raw = configuration.getValue(option);
         if (!raw.isBlank()) {
+            raw = replaceTokens(raw);
             try {
                 return Optional.of(option.parse(raw));
             } catch (Exception ex) {
-                throw new IllegalArgumentException(ex);
+                var msg = MessageFormat.format(
+                        NBPackage.MESSAGES.getString("message.invalidoptionvalue"),
+                        option.key(), raw);
+                throw new IllegalArgumentException(msg, ex);
             }
         } else {
             return Optional.empty();
@@ -80,14 +261,188 @@ public class ExecutionContext {
     }
 
     /**
-     * Replace tokens of the form <code>${KEY}</code> in the provided input
-     * text.
+     * If tasks should be verbose.
      *
-     * @param input
-     * @return
+     * @return verbose
      */
-    public String replaceTokens(String input) {
-        return input;
+    public boolean isVerbose() {
+        return configuration.isVerbose();
     }
 
+    /**
+     * Replace tokens of the form <code>${KEY}</code> in the provided input
+     * text. This uses the default token value source that supports tokens from
+     * option keys, as well as dynamic tokens during execution (currently only
+     * <code>${IMAGE_DIR}</code> for the path to the application image).
+     *
+     * @param input text possibly containing tokens
+     * @return text with tokens replaced
+     */
+    public String replaceTokens(String input) {
+        return replaceTokens(input, this::tokenReplacementFor);
+    }
+
+    /**
+     * Replace tokens of the form <code>${KEY}</code> in the provided input
+     * text. The provided token value source is used to convert tokens to their
+     * replacement text.
+     *
+     * @param input text possibly containing tokens
+     * @param tokenValueSource convert tokens to replacement text
+     * @return text with tokens replaced
+     */
+    public String replaceTokens(String input, UnaryOperator<String> tokenValueSource) {
+        var matcher = TOKEN_PATTERN.matcher(input);
+        var sb = new StringBuffer();
+        while (matcher.find()) {
+            var token = matcher.group(1);
+            var replacement = tokenValueSource.apply(token);
+            matcher.appendReplacement(sb, replacement);
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * The consumer of info messages for tasks to output to the user.
+     *
+     * @return info message handler
+     */
+    public Consumer<String> infoHandler() {
+        return configuration.infoHandler();
+    }
+
+    /**
+     * The consumer of warning messages for tasks to output to the user.
+     *
+     * @return warning message handler
+     */
+    public Consumer<String> warningHandler() {
+        return configuration.warningHandler();
+    }
+
+    /**
+     * Create and execute the packager task - called from NBPackage.
+     *
+     * @return path to image or package created
+     * @throws Exception on error
+     */
+    Path execute() throws Exception {
+        var task = packager.createTask(this);
+        if (input != null) {
+            task.validateCreateImage();
+            task.validateCreateBuildFiles();
+        }
+        if (!imageOnly) {
+            task.validateCreatePackage();
+        }
+        if (input != null) {
+            imagePath = task.createImage(input);
+            buildFiles = task.createBuildFiles(imagePath);
+        }
+        if (imageOnly) {
+            return imagePath;
+        }
+        return task.createPackage(imagePath, buildFiles);
+    }
+
+    private String tokenReplacementFor(String token) {
+        if (TOKEN_IMAGE_DIR.equals(token)) {
+            if (imagePath != null) {
+                return imagePath.toString();
+            }
+        } else {
+            var opt = NBPackage.options()
+                    .filter(o -> o.key().equals(token))
+                    .findFirst().orElse(null);
+            if (opt != null) {
+                return getValue(opt).toString();
+            }
+        }
+        var msg = MessageFormat.format(NBPackage.MESSAGES.getString("message.invalidtoken"), token);
+        throw new IllegalArgumentException(msg);
+    }
+
+    // copied from NetBeans' org.openide.util.BaseUtilities
+    private static List<String> parseParameters(String s) {
+        final int NULL = 0x0;
+        final int IN_PARAM = 0x1;
+        final int IN_DOUBLE_QUOTE = 0x2;
+        final int IN_SINGLE_QUOTE = 0x3;
+        ArrayList<String> params = new ArrayList<>(5);
+        char c;
+
+        int state = NULL;
+        StringBuilder buff = new StringBuilder(20);
+        int slength = s.length();
+
+        for (int i = 0; i < slength; i++) {
+            c = s.charAt(i);
+            switch (state) {
+                case NULL:
+                    switch (c) {
+                        case '\'':
+                            state = IN_SINGLE_QUOTE;
+                            break;
+                        case '"':
+                            state = IN_DOUBLE_QUOTE;
+                            break;
+                        default:
+                            if (!Character.isWhitespace(c)) {
+                                buff.append(c);
+                                state = IN_PARAM;
+                            }
+                    }
+                    break;
+                case IN_SINGLE_QUOTE:
+                    if (c != '\'') {
+                        buff.append(c);
+                    } else {
+                        state = IN_PARAM;
+                    }
+                    break;
+                case IN_DOUBLE_QUOTE:
+                    switch (c) {
+                        case '\\':
+                            char peek = (i < slength - 1) ? s.charAt(i + 1) : Character.MIN_VALUE;
+                            if (peek == '"' || peek == '\\') {
+                                buff.append(peek);
+                                i++;
+                            } else {
+                                buff.append(c);
+                            }
+                            break;
+                        case '"':
+                            state = IN_PARAM;
+                            break;
+                        default:
+                            buff.append(c);
+                    }
+                    break;
+                case IN_PARAM:
+                    switch (c) {
+                        case '\'':
+                            state = IN_SINGLE_QUOTE;
+                            break;
+                        case '"':
+                            state = IN_DOUBLE_QUOTE;
+                            break;
+                        default:
+                            if (Character.isWhitespace(c)) {
+                                params.add(buff.toString());
+                                buff.setLength(0);
+                                state = NULL;
+                            } else {
+                                buff.append(c);
+                            }
+                    }
+                    break;
+            }
+        }
+        if (buff.length() > 0) {
+            params.add(buff.toString());
+        }
+
+        return List.copyOf(params);
+    }
 }

@@ -95,10 +95,11 @@ public interface Packager {
          * specific layout and files required for passing in to the packaging
          * task.
          *
+         * @param input archive or directory containing application to package
          * @return path to image
          * @throws Exception on execution failure
          */
-        public Path createImage() throws Exception;
+        public Path createImage(Path input) throws Exception;
 
         /**
          * Create any additional files external to the image required by the

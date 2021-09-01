@@ -18,13 +18,14 @@
  */
 package org.apache.netbeans.nbpackage;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import picocli.CommandLine;
 
 /**
@@ -91,59 +92,67 @@ public class Main {
 
         @Override
         public Integer call() throws Exception {
-            if (input == null && inputImage == null && configOut == null) {
-                warning(NBPackage.MESSAGES.getString("message.notasks"));
-                return 1;
-            }
-            if (input != null && inputImage != null) {
-                warning(NBPackage.MESSAGES.getString("message.inputandimage"));
-                return 2;
-            }
-            var cb = Configuration.builder();
-            if (config != null) {
-                cb.load(config.toAbsolutePath());
-            }
-            if (packageType != null && !packageType.isBlank()) {
-                cb.set(NBPackage.PACKAGE_TYPE, packageType);
-            }
-
-            if (options != null && !options.isEmpty()) {
-                options.forEach((key, value) -> {
-                    var opt = NBPackage.options()
-                            .filter(o -> o.key().equals(key))
-                            .findFirst()
-                            .orElseThrow(() -> new IllegalArgumentException(key));
-                    cb.set(opt, value);
-                });
-            }
-
-            var conf = cb.build();
-
-            if (configOut != null) {
-                NBPackage.writeFullConfiguration(conf, configOut.toAbsolutePath());
-            }
-
-            Path dest = output == null ? Path.of("").toAbsolutePath() : output.toAbsolutePath();
-
-            if (input != null) {
-                if (imageOnly) {
-                    NBPackage.createImage(input.toAbsolutePath(), conf, dest);
-                } else {
-                    NBPackage.createPackage(input.toAbsolutePath(), conf, dest);
+            try {
+                if (input == null && inputImage == null && configOut == null) {
+                    warning(NBPackage.MESSAGES.getString("message.notasks"));
+                    return 1;
                 }
-            } else if (inputImage != null) {
-                List<Path> extras;
-                if (buildFiles != null && !buildFiles.isEmpty()) {
-                    extras = List.copyOf(buildFiles.stream()
-                            .map(Path::toAbsolutePath)
-                            .collect(Collectors.toList()));
-                } else {
-                    extras = List.of();
+                if (input != null && inputImage != null) {
+                    warning(NBPackage.MESSAGES.getString("message.inputandimage"));
+                    return 2;
                 }
-                NBPackage.packageImage(inputImage.toAbsolutePath(), extras, conf, dest);
-            }
+                var cb = Configuration.builder();
+                if (config != null) {
+                    cb.load(config.toAbsolutePath());
+                }
+                if (packageType != null && !packageType.isBlank()) {
+                    cb.set(NBPackage.PACKAGE_TYPE, packageType);
+                }
 
-            return 0;
+                if (options != null && !options.isEmpty()) {
+                    options.forEach((key, value) -> {
+                        var opt = NBPackage.options()
+                                .filter(o -> o.key().equals(key))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException(key));
+                        cb.set(opt, value);
+                    });
+                }
+
+                var conf = cb.build();
+
+                if (configOut != null) {
+                    NBPackage.writeFullConfiguration(conf, configOut);
+                }
+
+                Path dest = output == null ? Path.of("") : output;
+
+                Path created = null;
+                if (input != null) {
+                    if (imageOnly) {
+                        created = NBPackage.createImage(input, conf, dest);
+                    } else {
+                        created = NBPackage.createPackage(input, conf, dest);
+                    }
+                } else if (inputImage != null) {
+                    created = NBPackage.packageImage(inputImage, buildFiles, conf, dest);
+                }
+                if (created != null) {
+                    info(MessageFormat.format(NBPackage.MESSAGES.getString("message.outputcreated"), created));
+                }
+
+                return 0;
+            } catch (Exception ex) {
+                warning(ex.getClass().getSimpleName());
+                warning(ex.getLocalizedMessage());
+                if (verbose) {
+                    var sw = new StringWriter();
+                    var pw = new PrintWriter(sw);
+                    ex.printStackTrace(pw);
+                    warning(sw.toString());
+                }
+                return 3;
+            }
         }
 
         private void info(String msg) {

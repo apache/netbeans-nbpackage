@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.zip.ZipPackager;
 
@@ -89,7 +91,13 @@ public final class NBPackage {
             Configuration configuration,
             Path destination)
             throws Exception {
-        return null;
+        var packager = findPackager(configuration.getValue(PACKAGE_TYPE));
+        var exec = new ExecutionContext(packager,
+                input.toAbsolutePath(),
+                configuration,
+                destination.toAbsolutePath(),
+                false);
+        return exec.execute();
     }
 
     /**
@@ -114,7 +122,13 @@ public final class NBPackage {
             Configuration configuration,
             Path destination)
             throws Exception {
-        return null;
+        var packager = findPackager(configuration.getValue(PACKAGE_TYPE));
+        var exec = new ExecutionContext(packager,
+                input.toAbsolutePath(),
+                configuration,
+                destination.toAbsolutePath(),
+                true);
+        return exec.execute();
     }
 
     /**
@@ -135,7 +149,21 @@ public final class NBPackage {
             Configuration configuration,
             Path destination)
             throws Exception {
-        return null;
+        List<Path> extras;
+        if (buildFiles != null && !buildFiles.isEmpty()) {
+            extras = List.copyOf(buildFiles.stream()
+                    .map(Path::toAbsolutePath)
+                    .collect(Collectors.toList()));
+        } else {
+            extras = List.of();
+        }
+        var packager = findPackager(configuration.getValue(PACKAGE_TYPE));
+        var exec = new ExecutionContext(packager,
+                inputImage.toAbsolutePath(),
+                extras,
+                configuration,
+                destination.toAbsolutePath());
+        return exec.execute();
     }
 
     /**
@@ -174,7 +202,7 @@ public final class NBPackage {
      */
     public static void writeFullConfiguration(Configuration configuration,
             Path destination) throws IOException {
-        Files.writeString(destination,
+        Files.writeString(destination.toAbsolutePath(),
                 writeFullConfiguration(configuration, true),
                 StandardOpenOption.CREATE_NEW);
     }
@@ -194,11 +222,17 @@ public final class NBPackage {
      *
      * @param name packager name
      * @return packager
-     * @throws IllegalArgumentException if no packager by this name exists
+     * @throws IllegalArgumentException if name is blank or no packager by this
+     * name exists
      */
     public static Packager findPackager(String name) {
+        if (name.isBlank()) {
+            throw new IllegalArgumentException(MESSAGES.getString("message.notype"));
+        }
         return packagers().filter(p -> name.equals(p.name()))
-                .findFirst().orElseThrow(IllegalArgumentException::new);
+                .findFirst().orElseThrow(() -> new IllegalArgumentException(
+                MessageFormat.format(MESSAGES.getString("message.invalidtype"),
+                        name)));
     }
 
     /**
@@ -242,5 +276,5 @@ public final class NBPackage {
         }
         sb.append(option.key()).append("=").append(value).append(System.lineSeparator());
     }
-    
+
 }
