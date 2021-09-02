@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -124,16 +125,16 @@ public final class ExecutionContext {
     }
 
     /**
-     * Execute the given external process. The process will be executed using
-     * the current working directory. If {@link #isVerbose()} then process
-     * output streams will be routed to the info handler, else they will be
-     * discarded.
+     * Execute the given external process.The process will be executed using the
+     * current working directory. If {@link #isVerbose()} then process output
+     * streams will be routed to the info handler, else they will be discarded.
      *
      * @param command command line
+     * @return exit code of process
      * @throws IOException
      * @throws InterruptedException
      */
-    public void exec(List<String> command) throws IOException, InterruptedException {
+    public int exec(List<String> command) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder(command);
         boolean showOutput = isVerbose();
         if (showOutput) {
@@ -147,7 +148,7 @@ public final class ExecutionContext {
             var info = infoHandler();
             var warning = warningHandler();
             executor.submit(() -> {
-                try (var in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                try ( var in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
                     in.lines().forEachOrdered(info);
                 } catch (IOException ex) {
                     warning.accept(ex.getClass().getSimpleName());
@@ -155,7 +156,7 @@ public final class ExecutionContext {
 
             });
         }
-        p.waitFor();
+        return p.waitFor();
     }
 
     /**
@@ -185,7 +186,7 @@ public final class ExecutionContext {
             var info = configuration.infoHandler();
             var warning = configuration.warningHandler();
             executor.submit(() -> {
-                try (var in = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                try ( var in = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
                     in.lines().forEachOrdered(info);
                 } catch (IOException ex) {
                     warning.accept(ex.getClass().getSimpleName());
@@ -293,14 +294,43 @@ public final class ExecutionContext {
      */
     public String replaceTokens(String input, UnaryOperator<String> tokenValueSource) {
         var matcher = TOKEN_PATTERN.matcher(input);
-        var sb = new StringBuffer();
+        var sb = new StringBuilder();
         while (matcher.find()) {
             var token = matcher.group(1);
             var replacement = tokenValueSource.apply(token);
-            matcher.appendReplacement(sb, replacement);
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    /**
+     * Default token lookup. Useful if a task wants to provide its own token
+     * value source in
+     * {@link #replaceTokens(java.lang.String, java.util.function.UnaryOperator)}
+     * but fallback to the default token replacement.
+     *
+     * @param token key to replace
+     * @return replaced value
+     * @throws IllegalArgumentException if token is invalid
+     */
+    public String tokenReplacementFor(String token) {
+        if (TOKEN_IMAGE_DIR.equals(token)) {
+            if (imagePath != null) {
+                return imagePath.toString();
+            }
+        } else {
+            Option<?> opt = NBPackage.options()
+                    .filter(o -> o.key().equals(token))
+                    .findFirst().orElse(null);
+            if (opt != null) {
+                return getValue(opt)
+                        .map(Object::toString)
+                        .orElse(opt.defaultValue());
+            }
+        }
+        var msg = MessageFormat.format(NBPackage.MESSAGES.getString("message.invalidtoken"), token);
+        throw new IllegalArgumentException(msg);
     }
 
     /**
@@ -344,23 +374,6 @@ public final class ExecutionContext {
             return imagePath;
         }
         return task.createPackage(imagePath, buildFiles);
-    }
-
-    private String tokenReplacementFor(String token) {
-        if (TOKEN_IMAGE_DIR.equals(token)) {
-            if (imagePath != null) {
-                return imagePath.toString();
-            }
-        } else {
-            var opt = NBPackage.options()
-                    .filter(o -> o.key().equals(token))
-                    .findFirst().orElse(null);
-            if (opt != null) {
-                return getValue(opt).toString();
-            }
-        }
-        var msg = MessageFormat.format(NBPackage.MESSAGES.getString("message.invalidtoken"), token);
-        throw new IllegalArgumentException(msg);
     }
 
     // copied from NetBeans' org.openide.util.BaseUtilities
