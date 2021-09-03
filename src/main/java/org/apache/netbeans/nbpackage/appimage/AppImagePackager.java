@@ -41,22 +41,36 @@ public class AppImagePackager implements Packager {
             = Option.ofPath("package.appimage.tool", "",
                     MESSAGES.getString("option.appimagetool.description"));
 
+    /**
+     * Path to png icon (48x48) as required by AppDir / XDG specification.
+     */
     public static final Option<Path> APPIMAGE_ICON
             = Option.ofPath("package.appimage.icon", "",
                     MESSAGES.getString("option.appimageicon.description"));
 
+    /**
+     * Category (or categories) to set in .desktop file.
+     */
     public static final Option<String> APPIMAGE_CATEGORY
             = Option.ofString("package.appimage.category",
                     "Development;Java;IDE;",
                     MESSAGES.getString("option.appimagecategory.description"));
 
+    /**
+     * Architecture of AppImage to create. Defaults to parsing from appimagetool
+     * file name.
+     */
+    public static final Option<String> APPIMAGE_ARCH
+            = Option.ofString("package.appimage.arch",
+                    "",
+                    MESSAGES.getString("option.appimagearch.description"));
+
 //    public static final Option<Path> APPIMAGE_SVG_ICON
 //            = Option.ofPath("package.appimage.svg", "",
 //                    MESSAGES.getString("option.appimagesvg.description"));
-    
-    private static final List<Option<?>> APPIMAGE_OPTIONS = 
-            List.of(APPIMAGE_TOOL, APPIMAGE_ICON, APPIMAGE_CATEGORY);
-    
+    private static final List<Option<?>> APPIMAGE_OPTIONS
+            = List.of(APPIMAGE_TOOL, APPIMAGE_ICON, APPIMAGE_CATEGORY, APPIMAGE_ARCH);
+
     @Override
     public Task createTask(ExecutionContext context) {
         return new AppImageTask(context);
@@ -72,6 +86,4 @@ public class AppImagePackager implements Packager {
         return APPIMAGE_OPTIONS.stream();
     }
 
-    
-    
 }

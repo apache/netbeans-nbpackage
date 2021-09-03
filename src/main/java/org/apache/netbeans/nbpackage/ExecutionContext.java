@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
@@ -125,9 +126,12 @@ public final class ExecutionContext {
     }
 
     /**
-     * Execute the given external process.The process will be executed using the
-     * current working directory. If {@link #isVerbose()} then process output
-     * streams will be routed to the info handler, else they will be discarded.
+     * Execute the given external process. The process will be executed using
+     * the current working directory. If control over the working directory or
+     * environment is required, use {@link #exec(java.lang.ProcessBuilder)}.
+     * <p>
+     * If {@link #isVerbose()} then process output streams will be routed to the
+     * info handler, else they will be discarded.
      *
      * @param command command line
      * @return exit code of process
@@ -135,15 +139,29 @@ public final class ExecutionContext {
      * @throws InterruptedException
      */
     public int exec(List<String> command) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(command);
+        return exec(new ProcessBuilder(command));
+    }
+
+    /**
+     * Execute the given external process. If {@link #isVerbose()} then process
+     * output streams will be routed to the info handler, else they will be
+     * discarded.
+     *
+     * @param processBuilder command to execute
+     * @return exit code of process
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public int exec(ProcessBuilder processBuilder) throws IOException, InterruptedException {
         boolean showOutput = isVerbose();
         if (showOutput) {
-            pb.redirectErrorStream(true);
+            processBuilder.redirectErrorStream(true);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE);
         } else {
-            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            processBuilder.redirectError(ProcessBuilder.Redirect.DISCARD);
         }
-        Process p = pb.start();
+        Process p = processBuilder.start();
         if (showOutput) {
             var info = infoHandler();
             var warning = warningHandler();
@@ -161,9 +179,12 @@ public final class ExecutionContext {
 
     /**
      * Execute and get the output of the given external process. The process
-     * will be executed using the current working directory. If
-     * {@link #isVerbose()} then the error stream of the process will be routed
-     * to the info handler, else it will be discarded.
+     * will be executed using the current working directory. If control over the
+     * working directory or environment is required, use
+     * {@link #execAndGetOutput(java.lang.ProcessBuilder)}.
+     * <p>
+     * If {@link #isVerbose()} then the error stream of the process will be
+     * routed to the info handler, else it will be discarded.
      * <p>
      * Implementation note : execution will be routed to a temporary file and
      * read on process exit.
@@ -174,14 +195,29 @@ public final class ExecutionContext {
      * @throws InterruptedException
      */
     public String execAndGetOutput(List<String> command) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(command);
+        return execAndGetOutput(new ProcessBuilder(command));
+    }
+
+    /**
+     * Execute and get the output of the given external process. If
+     * {@link #isVerbose()} then the error stream of the process will be routed
+     * to the info handler, else it will be discarded.
+     * <p>
+     * Implementation note : execution will be routed to a temporary file and
+     * read on process exit.
+     *
+     * @param processBuilder command to execute
+     * @return output of command
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String execAndGetOutput(ProcessBuilder processBuilder) throws IOException, InterruptedException {
         boolean showOutput = isVerbose();
         Path tmp = Files.createTempFile("nbpackage", ".tmp");
-        pb.redirectOutput(tmp.toFile());
-        if (!showOutput) {
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-        }
-        Process p = pb.start();
+        processBuilder.redirectOutput(tmp.toFile());
+        processBuilder.redirectError(showOutput ? ProcessBuilder.Redirect.PIPE
+                : ProcessBuilder.Redirect.DISCARD);
+        Process p = processBuilder.start();
         if (showOutput) {
             var info = configuration.infoHandler();
             var warning = configuration.warningHandler();
@@ -358,22 +394,27 @@ public final class ExecutionContext {
      * @throws Exception on error
      */
     Path execute() throws Exception {
-        var task = packager.createTask(this);
-        if (input != null) {
-            task.validateCreateImage();
-            task.validateCreateBuildFiles();
+        try {
+            var task = packager.createTask(this);
+            if (input != null) {
+                task.validateCreateImage();
+                task.validateCreateBuildFiles();
+            }
+            if (!imageOnly) {
+                task.validateCreatePackage();
+            }
+            if (input != null) {
+                imagePath = task.createImage(input);
+                buildFiles = task.createBuildFiles(imagePath);
+            }
+            if (imageOnly) {
+                return imagePath;
+            }
+            return task.createPackage(imagePath, buildFiles);
+        } finally {
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
         }
-        if (!imageOnly) {
-            task.validateCreatePackage();
-        }
-        if (input != null) {
-            imagePath = task.createImage(input);
-            buildFiles = task.createBuildFiles(imagePath);
-        }
-        if (imageOnly) {
-            return imagePath;
-        }
-        return task.createPackage(imagePath, buildFiles);
     }
 
     // copied from NetBeans' org.openide.util.BaseUtilities

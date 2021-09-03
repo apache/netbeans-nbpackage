@@ -118,6 +118,10 @@ public class Main {
                         cb.set(opt, value);
                     });
                 }
+                
+                if (verbose) {
+                    cb.verbose();
+                }
 
                 var conf = cb.build();
 

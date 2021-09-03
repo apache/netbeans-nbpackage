@@ -33,21 +33,19 @@ import org.apache.netbeans.nbpackage.NBPackage;
 
 class AppImageTask extends AbstractPackagerTask {
 
-    private String execName;
-
     AppImageTask(ExecutionContext context) {
         super(context);
     }
 
     @Override
     public void validateCreatePackage() throws Exception {
-//        var tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
-//                .orElseThrow(() -> new IllegalStateException(
-//                AppImagePackager.MESSAGES.getString("message.noappimagetool")));
-//        if (!Files.isExecutable(tool)) {
-//            throw new IllegalStateException(
-//                    AppImagePackager.MESSAGES.getString("message.noappimagetool"));
-//        }
+        Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
+                .orElseThrow(() -> new IllegalStateException(
+                AppImagePackager.MESSAGES.getString("message.noappimagetool")));
+        if (!Files.isExecutable(tool)) {
+            throw new IllegalStateException(
+                    AppImagePackager.MESSAGES.getString("message.noappimagetool"));
+        }
     }
 
     @Override
@@ -69,21 +67,43 @@ class AppImageTask extends AbstractPackagerTask {
         setupIcons(image, execName);
         setupDesktopFile(image, execName);
         setupAppRunScript(image, execName);
-        
+
         return image;
-        
+
     }
 
     @Override
     public Path createPackage(Path image, List<Path> buildFiles) throws Exception {
-        return image;
+        Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
+                .orElseThrow(() -> new IllegalStateException(
+                AppImagePackager.MESSAGES.getString("message.noappimagetool")))
+                .toAbsolutePath();
+        String arch = context().getValue(AppImagePackager.APPIMAGE_ARCH)
+                .orElse(archFromAppImageTool(tool));
+        String targetName = image.getFileName().toString();
+        if (targetName.endsWith(".AppDir")) {
+            targetName = targetName.substring(0, targetName.length() - 7);
+        }
+        targetName = targetName + "-" + arch + ".AppImage";
+        Path target = context().destination().resolve(targetName);
+        List<String> cmd = List.of(tool.toString(), 
+                image.toAbsolutePath().toString(),
+                target.toString());
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.environment().put("ARCH", arch);
+        int result = context().exec(pb);
+        if (result != 0) {
+            throw new Exception();
+        } else {
+            return target;
+        }
     }
 
     @Override
     protected String imageName(Path input) throws Exception {
         var version = sanitize(context().getValue(NBPackage.PACKAGE_VERSION).orElse(""));
         return sanitize(context().getValue(NBPackage.PACKAGE_NAME).orElseThrow())
-                + (version.isBlank() ? "-AppDir" : "-" + version + "-AppDir");
+                + (version.isBlank() ? ".AppDir" : "-" + version + ".AppDir");
     }
 
     @Override
@@ -167,6 +187,16 @@ class AppImageTask extends AbstractPackagerTask {
         Path appRunPath = image.resolve("AppRun");
         Files.writeString(appRunPath, appRun, StandardOpenOption.CREATE_NEW);
         Files.setPosixFilePermissions(appRunPath, PosixFilePermissions.fromString("rwxr-xr-x"));
+    }
+
+    private String archFromAppImageTool(Path appImageTool) {
+        String filename = appImageTool.getFileName().toString();
+        for (var arch : new String[]{"x86_64", "i686", "aarch64", "armhf"}) {
+            if (filename.contains(arch)) {
+                return arch;
+            }
+        }
+        return "";
     }
 
 }
