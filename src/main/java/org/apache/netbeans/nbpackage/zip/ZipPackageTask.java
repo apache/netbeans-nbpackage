@@ -34,7 +34,7 @@ class ZipPackageTask extends AbstractPackagerTask {
     }
 
     @Override
-    public Path createPackage(Path image, List<Path> buildFiles) throws Exception {
+    public Path createPackage(Path image) throws Exception {
         Path dst = context().destination().resolve(image.getFileName().toString() + ".zip");
         FileUtils.createZipArchive(image, dst);
         return dst;

@@ -19,7 +19,6 @@
 package org.apache.netbeans.nbpackage;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -72,17 +71,6 @@ public interface Packager {
         public void validateCreateImage() throws Exception;
 
         /**
-         * Ensure basic configuration is in place to create any additional build
-         * files for the package image. The default implementation does nothing
-         * as the majority of packagers will not need this step.
-         *
-         * @throws Exception on validation failure
-         */
-        public default void validateCreateBuildFiles() throws Exception {
-            // no op
-        }
-
-        /**
          * Ensure basic configuration is in place to create a package with this
          * packager - eg. native tooling is available or required options set.
          *
@@ -102,30 +90,15 @@ public interface Packager {
         public Path createImage(Path input) throws Exception;
 
         /**
-         * Create any additional files external to the image required by the
-         * packaging implementation. The default implementation returns an
-         * empty, immutable list, as the majority of packagers will not need
-         * this step.
-         *
-         * @param image image created by {@link #createImage()}
-         * @return list of external files
-         * @throws Exception on execution failure
-         */
-        public default List<Path> createBuildFiles(Path image) throws Exception {
-            return List.of();
-        }
-
-        /**
          * Create a package from the image and additional files created by
          * {@link #createImage()} and
          * {@link #createBuildFiles(java.nio.file.Path)}.
          *
          * @param image image created by {@link #createImage()}
-         * @param buildFiles addition build files created by {@link #createBuildFiles(java.nio.file.Path)}
          * @return path to created package
          * @throws Exception on execution failure
          */
-        public Path createPackage(Path image, List<Path> buildFiles) throws Exception;
+        public Path createPackage(Path image) throws Exception;
 
     }
 

@@ -142,29 +142,18 @@ public final class NBPackage {
      * already exist. The returned path is the created package.
      *
      * @param inputImage input image
-     * @param buildFiles additional build files, or empty list (not null)
      * @param configuration packaging configuration
      * @param destination directory to create package in
      * @return path to created package
      * @throws Exception on errors in creating package
      */
     public static Path packageImage(Path inputImage,
-            List<Path> buildFiles,
             Configuration configuration,
             Path destination)
             throws Exception {
-        List<Path> extras;
-        if (buildFiles != null && !buildFiles.isEmpty()) {
-            extras = List.copyOf(buildFiles.stream()
-                    .map(Path::toAbsolutePath)
-                    .collect(Collectors.toList()));
-        } else {
-            extras = List.of();
-        }
         var packager = findPackager(configuration.getValue(PACKAGE_TYPE));
         var exec = new ExecutionContext(packager,
                 inputImage.toAbsolutePath(),
-                extras,
                 configuration,
                 destination.toAbsolutePath());
         return exec.execute();

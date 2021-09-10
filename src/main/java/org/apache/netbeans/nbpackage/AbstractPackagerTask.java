@@ -44,11 +44,6 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         // no op
     }
 
-    @Override
-    public void validateCreateBuildFiles() throws Exception {
-        // no op
-    }
-
     /**
      * Default implementation of
      * {@link Packager.Task#createImage(java.nio.file.Path)}. Creates an image
@@ -104,11 +99,6 @@ public abstract class AbstractPackagerTask implements Packager.Task {
             }
         }
         return image;
-    }
-
-    @Override
-    public List<Path> createBuildFiles(Path image) throws Exception {
-        return List.of();
     }
 
     /**

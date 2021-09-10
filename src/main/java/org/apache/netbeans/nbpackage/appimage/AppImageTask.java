@@ -73,7 +73,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     @Override
-    public Path createPackage(Path image, List<Path> buildFiles) throws Exception {
+    public Path createPackage(Path image) throws Exception {
         Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
                 .orElseThrow(() -> new IllegalStateException(
                 AppImagePackager.MESSAGES.getString("message.noappimagetool")))

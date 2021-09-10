@@ -23,7 +23,6 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -61,10 +60,6 @@ public class Main {
         @CommandLine.Option(names = {"--input-image"},
                 descriptionKey = "option.inputimage.description")
         private Path inputImage;
-
-        @CommandLine.Option(names = "--build-file",
-                descriptionKey = "option.buildfile.description")
-        private List<Path> buildFiles;
 
         @CommandLine.Option(names = {"-o", "--output"},
                 descriptionKey = "option.output.description")
@@ -139,7 +134,7 @@ public class Main {
                         created = NBPackage.createPackage(input, conf, dest);
                     }
                 } else if (inputImage != null) {
-                    created = NBPackage.packageImage(inputImage, buildFiles, conf, dest);
+                    created = NBPackage.packageImage(inputImage, conf, dest);
                 }
                 if (created != null) {
                     info(MessageFormat.format(NBPackage.MESSAGES.getString("message.outputcreated"), created));

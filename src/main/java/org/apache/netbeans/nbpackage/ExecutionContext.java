@@ -53,7 +53,6 @@ public final class ExecutionContext {
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     private Path imagePath;
-    private List<Path> buildFiles;
 
     /**
      * Constructor used from NBPackage createPackage and createImage.
@@ -67,7 +66,6 @@ public final class ExecutionContext {
         this.configuration = config;
         this.input = input;
         this.imagePath = null;
-        this.buildFiles = null;
         this.destination = destination;
         this.imageOnly = imageOnly;
     }
@@ -77,13 +75,11 @@ public final class ExecutionContext {
      */
     ExecutionContext(Packager packager,
             Path inputImage,
-            List<Path> buildFiles,
             Configuration configuration,
             Path destination) {
         this.packager = packager;
         this.input = null;
         this.imagePath = inputImage;
-        this.buildFiles = buildFiles;
         this.configuration = configuration;
         this.destination = destination;
         this.imageOnly = false;
@@ -105,15 +101,6 @@ public final class ExecutionContext {
      */
     public Path image() {
         return imagePath;
-    }
-
-    /**
-     * Get any additional build files. May be null.
-     *
-     * @return additional build files
-     */
-    public List<Path> buildFiles() {
-        return buildFiles == null ? null : List.copyOf(buildFiles);
     }
 
     /**
@@ -398,19 +385,17 @@ public final class ExecutionContext {
             var task = packager.createTask(this);
             if (input != null) {
                 task.validateCreateImage();
-                task.validateCreateBuildFiles();
             }
             if (!imageOnly) {
                 task.validateCreatePackage();
             }
             if (input != null) {
                 imagePath = task.createImage(input);
-                buildFiles = task.createBuildFiles(imagePath);
             }
             if (imageOnly) {
                 return imagePath;
             }
-            return task.createPackage(imagePath, buildFiles);
+            return task.createPackage(imagePath);
         } finally {
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);

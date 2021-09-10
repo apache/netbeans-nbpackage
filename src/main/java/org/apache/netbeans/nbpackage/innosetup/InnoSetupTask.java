@@ -61,7 +61,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     @Override
-    public Path createPackage(Path image, List<Path> buildFiles) throws Exception {
+    public Path createPackage(Path image) throws Exception {
         Path tool = context().getValue(INNOSETUP_TOOL)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")))
@@ -161,7 +161,7 @@ class InnoSetupTask extends AbstractPackagerTask {
         String appID = context().getValue(INNOSETUP_APPID).orElse(appName);
         String appVersion = context().getValue(NBPackage.PACKAGE_VERSION).orElse("1.0");
         String execParam = context().getValue(NBPackage.PACKAGE_RUNTIME)
-                .map(p -> "Parameters: \"--jdkhome {app}\\jdk\";")
+                .map(p -> "Parameters: \"--jdkhome \"\"{app}\\jdk\"\"\";")
                 .orElse("");
         
         var map = Map.of("APP_ID", appID,
