@@ -96,7 +96,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
             }
             if (runtimeDir.startsWith(appDir)) {
                 String jdkhome = appDir.relativize(runtimeDir).toString();
-                try (var confs = Files.newDirectoryStream(image.resolve("etc"), "*.conf")) {
+                try (var confs = Files.newDirectoryStream(appDir.resolve("etc"), "*.conf")) {
                     for (Path conf : confs) {
                         addRuntimeToConf(conf, jdkhome);
                     }

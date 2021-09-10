@@ -28,6 +28,7 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.appimage.AppImagePackager;
+import org.apache.netbeans.nbpackage.innosetup.InnoSetupPackager;
 import org.apache.netbeans.nbpackage.zip.ZipPackager;
 
 /**
@@ -66,6 +67,7 @@ public final class NBPackage {
 // @TODO generate list from service loader if modularizing
     private static final List<Packager> PACKAGERS = List.of(
             new AppImagePackager(),
+            new InnoSetupPackager(),
             new ZipPackager()
     );
 
