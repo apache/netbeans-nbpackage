@@ -4,6 +4,7 @@ AppName=${APP_NAME}
 AppVersion=${APP_VERSION}
 
 ; TO-DO ${APP_URLS}
+${APP_LICENSE}
 
 DefaultDirName="{autopf}\${APP_NAME_SAFE}"
 DisableProgramGroupPage=yes

@@ -41,7 +41,7 @@ public class InnoSetupPackager implements Packager {
     public static final Option<Path> INNOSETUP_TOOL
             = Option.ofPath("package.innosetup.tool", "",
                     MESSAGES.getString("option.innosetuptool.description"));
-    
+
     /**
      * InnoSetup App ID.
      */
@@ -55,17 +55,25 @@ public class InnoSetupPackager implements Packager {
     public static final Option<Path> INNOSETUP_ICON
             = Option.ofPath("package.innosetup.icon", "",
                     MESSAGES.getString("option.innosetupicon.description"));
-    
+
+    /**
+     * Path to optional license file (*.txt or *.rtf) to display during
+     * installation.
+     */
+    public static final Option<Path> INNOSETUP_LICENSE
+            = Option.ofPath("package.innosetup.license", "",
+                    MESSAGES.getString("option.innosetuplicense.description"));
+
     /**
      * Path to alternative InnoSetup template.
      */
     public static final Option<Path> INNOSETUP_TEMPLATE
             = Option.ofPath("package.innosetup.template", "",
                     MESSAGES.getString("option.innosetuptemplate.description"));
-    
 
     private static final List<Option<?>> INNOSETUP_OPTIONS
-            = List.of(INNOSETUP_TOOL, INNOSETUP_APPID, INNOSETUP_ICON, INNOSETUP_TEMPLATE);
+            = List.of(INNOSETUP_TOOL, INNOSETUP_APPID, INNOSETUP_ICON,
+                    INNOSETUP_LICENSE, INNOSETUP_TEMPLATE);
 
     @Override
     public Task createTask(ExecutionContext context) {

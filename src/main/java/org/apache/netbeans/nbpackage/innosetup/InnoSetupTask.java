@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
@@ -56,6 +57,7 @@ class InnoSetupTask extends AbstractPackagerTask {
         Files.move(image.resolve("APPDIR"), appDir);
 
         setupIcons(image, execName);
+        setupLicenseFile(image);
         createInnoSetupScript(image, execName);
 
         return image;
@@ -75,12 +77,12 @@ class InnoSetupTask extends AbstractPackagerTask {
             }
             issFile = itr.next();
         }
-        
+
         var cmd = List.of(tool.toString(), issFile.getFileName().toString());
         var pb = new ProcessBuilder(cmd);
         pb.directory(image.toFile());
         context().exec(pb);
-        
+
         Path exeFile;
         try (var stream = Files.newDirectoryStream(image.resolve("Output"), "*.exe")) {
             var itr = stream.iterator();
@@ -99,7 +101,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     protected String imageName(Path input) throws Exception {
         return super.imageName(input) + "-InnoSetup";
     }
-    
+
     @Override
     protected Path applicationDirectory(Path image) throws Exception {
         return image.resolve("APPDIR");
@@ -137,6 +139,21 @@ class InnoSetupTask extends AbstractPackagerTask {
             );
         }
     }
+    
+    private void setupLicenseFile(Path image) throws IOException {
+        var license = context().getValue(INNOSETUP_LICENSE).orElse(null);
+        if (license == null) {
+            return;
+        }
+        var name = license.getFileName().toString().toLowerCase(Locale.ROOT);
+        var isTXT = name.endsWith(".txt");
+        var isRTF = name.endsWith(".rtf");
+        if (!isTXT && !isRTF) {
+            throw new IllegalArgumentException(license.toString());
+        }
+        var target = image.resolve(isTXT ? "license.txt" : "license.rtf");
+        Files.copy(license, target);
+    }
 
     private void createInnoSetupScript(Path image, String execName) throws IOException {
         Path templateFile = context().getValue(INNOSETUP_TEMPLATE).orElse(null);
@@ -161,21 +178,32 @@ class InnoSetupTask extends AbstractPackagerTask {
         String appNameSafe = sanitize(appName);
         String appID = context().getValue(INNOSETUP_APPID).orElse(appName);
         String appVersion = context().getValue(NBPackage.PACKAGE_VERSION).orElse("1.0");
+
+        String appLicense;
+        if (Files.exists(image.resolve("license.txt"))) {
+            appLicense = "LicenseFile=license.txt";
+        } else if (Files.exists(image.resolve("license.rtf"))) {
+            appLicense = "LicenseFile=license.rtf";
+        } else {
+            appLicense = "";
+        }
+
         String execParam = context().getValue(NBPackage.PACKAGE_RUNTIME)
                 .map(p -> "Parameters: \"--jdkhome \"\"{app}\\jdk\"\"\";")
                 .orElse("");
-        
+
         var map = Map.of("APP_ID", appID,
                 "APP_NAME", appName,
                 "APP_NAME_SAFE", appNameSafe,
                 "APP_VERSION", appVersion,
+                "APP_LICENSE", appLicense,
                 "INSTALL_DELETE", installDeleteSection,
                 "FILES", filesSection,
                 "EXEC_NAME", execName,
                 "PARAMETERS", execParam
         );
 
-        String script = StringUtils.replaceTokens(appID, map);
+        String script = StringUtils.replaceTokens(template, map);
 
         Files.writeString(image.resolve(execName + ".iss"), script,
                 StandardOpenOption.CREATE_NEW);
