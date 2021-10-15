@@ -31,9 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Provide access to configuration, environment and utilities for packager
@@ -41,8 +38,7 @@ import java.util.regex.Pattern;
  */
 public final class ExecutionContext {
 
-    private static final String TOKEN_IMAGE_DIR = "IMAGE_DIR";
-    private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+    private static final String TOKEN_IMAGE_DIR = "IMAGE";
 
     private final Packager packager;
     private final Path input;
@@ -238,8 +234,8 @@ public final class ExecutionContext {
      * will be replaced before the option is parsed.
      * <p>
      * Will return {@link Optional#EMPTY} if the value has not been set and has
-     * no default. Will throw an exception a value exists and cannot be parsed
-     * by the option.
+     * no default. Will throw an exception if a value exists and cannot be
+     * parsed by the option.
      *
      * @param <T> option type
      * @param option option definition
@@ -297,34 +293,13 @@ public final class ExecutionContext {
      * Replace tokens of the form <code>${KEY}</code> in the provided input
      * text. This uses the default token value source that supports tokens from
      * option keys, as well as dynamic tokens during execution (currently only
-     * <code>${IMAGE_DIR}</code> for the path to the application image).
+     * <code>${IMAGE}</code> for the path to the application image).
      *
      * @param input text possibly containing tokens
      * @return text with tokens replaced
      */
     public String replaceTokens(String input) {
-        return replaceTokens(input, this::tokenReplacementFor);
-    }
-
-    /**
-     * Replace tokens of the form <code>${KEY}</code> in the provided input
-     * text. The provided token value source is used to convert tokens to their
-     * replacement text.
-     *
-     * @param input text possibly containing tokens
-     * @param tokenValueSource convert tokens to replacement text
-     * @return text with tokens replaced
-     */
-    public String replaceTokens(String input, UnaryOperator<String> tokenValueSource) {
-        var matcher = TOKEN_PATTERN.matcher(input);
-        var sb = new StringBuilder();
-        while (matcher.find()) {
-            var token = matcher.group(1);
-            var replacement = tokenValueSource.apply(token);
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
+        return StringUtils.replaceTokens(input, this::tokenReplacementFor);
     }
 
     /**
@@ -334,8 +309,7 @@ public final class ExecutionContext {
      * but fallback to the default token replacement.
      *
      * @param token key to replace
-     * @return replaced value
-     * @throws IllegalArgumentException if token is invalid
+     * @return token value or null
      */
     public String tokenReplacementFor(String token) {
         if (TOKEN_IMAGE_DIR.equals(token)) {
@@ -352,8 +326,7 @@ public final class ExecutionContext {
                         .orElse(opt.defaultValue());
             }
         }
-        var msg = MessageFormat.format(NBPackage.MESSAGES.getString("message.invalidtoken"), token);
-        throw new IllegalArgumentException(msg);
+        return null;
     }
 
     /**

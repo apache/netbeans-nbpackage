@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
+import org.apache.netbeans.nbpackage.StringUtils;
 
 import static org.apache.netbeans.nbpackage.innosetup.InnoSetupPackager.*;
 
@@ -174,8 +175,7 @@ class InnoSetupTask extends AbstractPackagerTask {
                 "PARAMETERS", execParam
         );
 
-        String script
-                = context().replaceTokens(template, k -> map.getOrDefault(k, "${" + k + "}"));
+        String script = StringUtils.replaceTokens(appID, map);
 
         Files.writeString(image.resolve(execName + ".iss"), script,
                 StandardOpenOption.CREATE_NEW);

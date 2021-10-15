@@ -26,10 +26,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
+import org.apache.netbeans.nbpackage.StringUtils;
 
 class AppImageTask extends AbstractPackagerTask {
 
@@ -157,7 +159,7 @@ class AppImageTask extends AbstractPackagerTask {
                         getClass().getResourceAsStream("AppImage.desktop.template")))) {
             template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
         }
-        String desktop = context().replaceTokens(template,
+        String desktop = StringUtils.replaceTokens(template,
                 key -> "EXEC".equals(key) ? execName : context().tokenReplacementFor(key));
         Path desktopDir = image.resolve("usr")
                 .resolve("share")
@@ -176,14 +178,7 @@ class AppImageTask extends AbstractPackagerTask {
                         getClass().getResourceAsStream("AppImage.launcher.template")))) {
             template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
         }
-        String appRun = context().replaceTokens(template, key -> {
-            if ("EXEC".equals(key)) {
-                return execName;
-            } else {
-                // assume part of script and put back
-                return "${" + key + "}";
-            }
-        });
+        String appRun = StringUtils.replaceTokens(template, Map.of("EXEC", execName));
         Path appRunPath = image.resolve("AppRun");
         Files.writeString(appRunPath, appRun, StandardOpenOption.CREATE_NEW);
         Files.setPosixFilePermissions(appRunPath, PosixFilePermissions.fromString("rwxr-xr-x"));

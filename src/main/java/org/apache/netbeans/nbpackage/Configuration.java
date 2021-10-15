@@ -21,6 +21,7 @@ package org.apache.netbeans.nbpackage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -119,16 +120,27 @@ public final class Configuration {
         }
 
         /**
-         * A path to a properties file to load into the configuration.
+         * A path to a properties file to load into the configuration. The token
+         * <code>${CONFIG}</code> in any values will be replaced with the parent
+         * path of the properties file, allowing for relative paths to be
+         * specified.
          *
          * @param path configuration properties file
          * @return this
          * @throws IOException on problems loading
          */
         public Builder load(Path path) throws IOException {
+            var extraProps = new Properties();
+            var configReplace = Map.of("CONFIG",
+                    path.getParent().toString());
             try ( var reader = Files.newBufferedReader(path)) {
-                properties.load(reader);
+                extraProps.load(reader);
             }
+            extraProps.entrySet().forEach(e -> {
+                e.setValue(StringUtils.replaceTokens(e.getValue().toString(),
+                        configReplace));
+            });
+            properties.putAll(extraProps);
             return this;
         }
 

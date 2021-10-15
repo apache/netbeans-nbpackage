@@ -56,30 +56,27 @@ public class ExecutionContextTest {
      */
     @Test
     public void testReplaceTokens_String_UnaryOperator() {
-        var ctxt = new ExecutionContext(null, null, null, null, false);
-        var text = "A single line with a ${PACKAGE.TOKEN_TEXT} in it";
-        var processed = ctxt.replaceTokens(text, t -> {
-            switch (t) {
-                case "PACKAGE.TOKEN_TEXT":
-                    return "replaced token";
-                default:
-                    return "BROKEN";
-            }
-        });
-        assertEquals("A single line with a replaced token in it", processed);
+        Configuration config = Configuration.builder().
+                set(NBPackage.PACKAGE_NAME, "Apache NetBeans")
+                .build();
+        ExecutionContext ctxt = new ExecutionContext(null, null, config, null, false);
+        String text = "The package name is ${package.name}.";
+        String processed = ctxt.replaceTokens(text);
+        assertEquals("The package name is Apache NetBeans.", processed);
 
-        text = "A single line with a ${TOKEN.1} and a ${TOKEN.2} in it";
-        processed = ctxt.replaceTokens(text, t -> {
-            switch (t) {
-                case "TOKEN.1":
-                    return "ONE";
-                case "TOKEN.2":
-                    return "TWO";
-                default:
-                    return "BROKEN";
-            }
-        });
-        assertEquals("A single line with a ONE and a TWO in it", processed);
+        config = Configuration.builder()
+                .set(NBPackage.PACKAGE_NAME, "Apache NetBeans")
+                .set(NBPackage.PACKAGE_VERSION, "101.1")
+                .build();
+        ctxt = new ExecutionContext(null, null, config, null, false);
+        
+        text = "${package.name}\nat version : ${package.version}.";
+        processed = ctxt.replaceTokens(text);
+        assertEquals("Apache NetBeans\nat version : 101.1.", processed);
+        
+        text = "${package.name} execution token ${EXEC}.";
+        processed = ctxt.replaceTokens(text);
+        assertEquals("Apache NetBeans execution token ${EXEC}.", processed);
     }
 
 //    /**
