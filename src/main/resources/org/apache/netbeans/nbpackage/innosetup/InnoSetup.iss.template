@@ -5,9 +5,9 @@ AppVersion=${APP_VERSION}
 
 ; TO-DO ${APP_URLS}
 
-DefaultDirName={autopf}\${APP_NAME_SAFE}
+DefaultDirName="{autopf}\${APP_NAME_SAFE}"
 DisableProgramGroupPage=yes
-OutputBaseFilename="${APP_NAME_SAFE}-${APP_VERSION}"
+OutputBaseFilename="${APP_NAME_SAFE} ${APP_VERSION}"
 SetupIconFile="${EXEC_NAME}\etc\${EXEC_NAME}.ico"
 Compression=lzma
 SolidCompression=yes

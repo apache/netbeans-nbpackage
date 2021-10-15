@@ -182,7 +182,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     private String sanitize(String name) {
-        return name.replaceAll("[^a-zA-Z0-9-\\.]", "_");
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
     private String buildInstallDeleteSection(List<Path> files) {
