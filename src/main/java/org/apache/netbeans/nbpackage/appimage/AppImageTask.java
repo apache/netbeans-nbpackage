@@ -111,12 +111,12 @@ class AppImageTask extends AbstractPackagerTask {
     @Override
     protected Path applicationDirectory(Path image) throws Exception {
         // change name to launcher name later
-        return image.resolve("usr/lib/APPDIR");
+        return image.resolve("usr").resolve("lib").resolve("APPDIR");
     }
 
     @Override
     protected Path runtimeDirectory(Path image, Path application) throws Exception {
-        return image.resolve("usr/lib/jdk");
+        return image.resolve("usr").resolve("lib").resolve("jdk");
     }
 
     private String sanitize(String name) {

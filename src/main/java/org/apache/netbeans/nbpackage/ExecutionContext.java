@@ -121,6 +121,23 @@ public final class ExecutionContext {
      * @throws IOException
      * @throws InterruptedException
      */
+    public int exec(String... command) throws IOException, InterruptedException {
+        return exec(List.of(command));
+    }
+
+    /**
+     * Execute the given external process. The process will be executed using
+     * the current working directory. If control over the working directory or
+     * environment is required, use {@link #exec(java.lang.ProcessBuilder)}.
+     * <p>
+     * If {@link #isVerbose()} then process output streams will be routed to the
+     * info handler, else they will be discarded.
+     *
+     * @param command command line
+     * @return exit code of process
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public int exec(List<String> command) throws IOException, InterruptedException {
         return exec(new ProcessBuilder(command));
     }
@@ -158,6 +175,27 @@ public final class ExecutionContext {
             });
         }
         return p.waitFor();
+    }
+
+    /**
+     * Execute and get the output of the given external process. The process
+     * will be executed using the current working directory. If control over the
+     * working directory or environment is required, use
+     * {@link #execAndGetOutput(java.lang.ProcessBuilder)}.
+     * <p>
+     * If {@link #isVerbose()} then the error stream of the process will be
+     * routed to the info handler, else it will be discarded.
+     * <p>
+     * Implementation note : execution will be routed to a temporary file and
+     * read on process exit.
+     *
+     * @param command command line
+     * @return output of command
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String execAndGetOutput(String... command) throws IOException, InterruptedException {
+        return execAndGetOutput(List.of(command));
     }
 
     /**
@@ -278,6 +316,16 @@ public final class ExecutionContext {
      */
     public boolean isDefaultValue(Option<?> option) {
         return option.defaultValue().equals(getRawValue(option));
+    }
+
+    /**
+     * Check if the task is only creating an image rather than the final
+     * package.
+     *
+     * @return creating image only
+     */
+    public boolean isImageOnly() {
+        return imageOnly;
     }
 
     /**
