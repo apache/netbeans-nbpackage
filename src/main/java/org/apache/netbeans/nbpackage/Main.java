@@ -136,10 +136,6 @@ public class Main {
                 } else if (inputImage != null) {
                     created = NBPackage.packageImage(inputImage, conf, dest);
                 }
-                if (created != null) {
-                    info(MessageFormat.format(NBPackage.MESSAGES.getString("message.outputcreated"), created));
-                }
-
                 return 0;
             } catch (Exception ex) {
                 warning(ex.getClass().getSimpleName());

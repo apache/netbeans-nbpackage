@@ -403,20 +403,37 @@ public final class ExecutionContext {
      */
     Path execute() throws Exception {
         try {
+            infoHandler().accept(MessageFormat.format(
+                    NBPackage.MESSAGES.getString("message.creatingtask"),
+                    packager.name()));
             var task = packager.createTask(this);
             if (input != null) {
+                infoHandler().accept(NBPackage.MESSAGES.getString("message.validatingimage"));
                 task.validateCreateImage();
             }
             if (!imageOnly) {
+                infoHandler().accept(NBPackage.MESSAGES.getString("message.validatingpackage"));
                 task.validateCreatePackage();
             }
             if (input != null) {
+                infoHandler().accept(MessageFormat.format(
+                        NBPackage.MESSAGES.getString("message.creatingimage"),
+                        input));
                 imagePath = task.createImage(input);
             }
+            Path result;
             if (imageOnly) {
-                return imagePath;
+                result = imagePath;
+            } else {
+                infoHandler().accept(MessageFormat.format(
+                        NBPackage.MESSAGES.getString("message.creatingpackage"),
+                        imagePath));
+                result = task.createPackage(imagePath);
             }
-            return task.createPackage(imagePath);
+            infoHandler().accept(MessageFormat.format(
+                    NBPackage.MESSAGES.getString("message.outputcreated"),
+                    result));
+            return result;
         } finally {
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);
