@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Stream;
-import org.apache.commons.compress.harmony.archive.internal.nls.Messages;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.Option;
 import org.apache.netbeans.nbpackage.Packager;
@@ -41,7 +40,7 @@ public class DebPackager implements Packager {
      */
     public static final Option<Path> DEB_ICON
             = Option.ofPath("package.deb.icon", "",
-                    Messages.getString("option.icon.description"));
+                    MESSAGES.getString("option.icon.description"));
 
     /**
      * Path to svg icon. Will only be used if DEB_ICON is also set. Defaults to
@@ -49,7 +48,7 @@ public class DebPackager implements Packager {
      */
     public static final Option<Path> DEB_SVG
             = Option.ofPath("package.deb.svg-icon", "",
-                    Messages.getString("option.svg.description"));
+                    MESSAGES.getString("option.svg.description"));
 
     /**
      * Name for the .desktop file (without suffix). Defaults to sanitized
@@ -57,7 +56,7 @@ public class DebPackager implements Packager {
      */
     public static final Option<String> DEB_DESKTOP_FILENAME
             = Option.ofString("package.deb.desktop-filename", "",
-                    Messages.getString("option.desktopfilename.description"));
+                    MESSAGES.getString("option.desktopfilename.description"));
 
     /**
      * StartupWMClass to set in .desktop file.
