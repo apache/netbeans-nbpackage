@@ -50,6 +50,11 @@ Create a Linux [AppImage][appimage]. Requires download of the
 [AppImageTool][appimagetool], making it executable, and adding the path to the
 configuration file.
 
+### `--type linux-deb`
+
+Create a Linux DEB package. Requires `dpkg`, `dpkg-deb` and `fakeroot` to be
+available on the system.
+
 ### `--type windows-innosetup`
 
 Create a Windows [Inno Setup][innosetup] installer. Requires download of the
