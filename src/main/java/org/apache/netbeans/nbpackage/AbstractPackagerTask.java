@@ -156,7 +156,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     private void extractAppFromArchive(Path input, Path destDir) throws IOException {
         var tmp = Files.createTempDirectory("nbpackageImageExtract");
         FileUtils.extractArchive(input, tmp);
-        var images = FileUtils.findDirs(tmp, 2, "bin/*", "etc/*.conf");
+        var images = FileUtils.findDirs(tmp, 5, "bin/*", "etc/*.conf");
         if (images.size() != 1) {
             throw new IOException(input.toString());
         }
@@ -165,7 +165,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     }
 
     private void copyAppFromDirectory(Path input, Path destDir) throws IOException {
-        var images = FileUtils.findDirs(input, 2, "bin/*", "etc/*.conf");
+        var images = FileUtils.findDirs(input, 5, "bin/*", "etc/*.conf");
         if (images.size() != 1) {
             throw new IOException(input.toString());
         }
@@ -180,7 +180,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     private void extractRuntimeFromArchive(Path runtime, Path destDir) throws IOException {
         var tmp = Files.createTempDirectory("nbpackageRuntimeExtract");
         FileUtils.extractArchive(runtime, tmp);
-        var runtimes = FileUtils.findDirs(tmp, 2, "bin/java*");
+        var runtimes = FileUtils.findDirs(tmp, 5, "bin/java*");
         if (runtimes.size() != 1) {
             throw new IOException(runtime.toString());
         }
@@ -189,7 +189,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     }
 
     private void copyRuntimeFromDirectory(Path runtime, Path destDir) throws IOException {
-        var runtimes = FileUtils.findDirs(runtime, 2, "bin/java*");
+        var runtimes = FileUtils.findDirs(runtime, 5, "bin/java*");
         if (runtimes.size() != 1) {
             throw new IOException(runtime.toString());
         }

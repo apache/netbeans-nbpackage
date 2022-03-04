@@ -25,11 +25,11 @@ import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.appimage.AppImagePackager;
 import org.apache.netbeans.nbpackage.deb.DebPackager;
 import org.apache.netbeans.nbpackage.innosetup.InnoSetupPackager;
+import org.apache.netbeans.nbpackage.macos.PkgPackager;
 import org.apache.netbeans.nbpackage.zip.ZipPackager;
 
 /**
@@ -70,6 +70,7 @@ public final class NBPackage {
             new AppImagePackager(),
             new DebPackager(),
             new InnoSetupPackager(),
+            new PkgPackager(),
             new ZipPackager()
     );
 
