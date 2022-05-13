@@ -141,6 +141,9 @@ public class FileUtils {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
                     throws IOException {
+                if (dir.equals(src)) {
+                    return CONTINUE;
+                }
                 Path targetDir = dst.resolve(src.relativize(dir));
                 try {
                     Files.copy(dir, targetDir);
@@ -165,8 +168,35 @@ public class FileUtils {
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc)
                     throws IOException {
+                if (dir.equals(src)) {
+                    return CONTINUE;
+                }
                 Files.delete(dir);
                 return CONTINUE;
+            }
+
+        });
+    }
+
+    /**
+     * Recursively delete a directory and all files inside it.
+     *
+     * @param dir directory to delete
+     * @throws IOException
+     */
+    public static void deleteFiles(Path dir) throws IOException {
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
             }
 
         });
