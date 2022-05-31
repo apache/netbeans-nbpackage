@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A range of useful file utility functions for packagers.
+ * A range of useful String utility functions for packagers.
  */
 public class StringUtils {
 
