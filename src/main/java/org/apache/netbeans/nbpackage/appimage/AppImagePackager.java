@@ -37,21 +37,21 @@ public class AppImagePackager implements Packager {
     /**
      * Path to appimagetool executable.
      */
-    public static final Option<Path> APPIMAGE_TOOL
+    static final Option<Path> APPIMAGE_TOOL
             = Option.ofPath("package.appimage.tool", "",
                     MESSAGES.getString("option.appimagetool.description"));
 
     /**
      * Path to png icon (48x48) as required by AppDir / XDG specification.
      */
-    public static final Option<Path> APPIMAGE_ICON
+    static final Option<Path> APPIMAGE_ICON
             = Option.ofPath("package.appimage.icon", "",
                     MESSAGES.getString("option.appimageicon.description"));
 
     /**
      * Category (or categories) to set in .desktop file.
      */
-    public static final Option<String> APPIMAGE_CATEGORY
+    static final Option<String> APPIMAGE_CATEGORY
             = Option.ofString("package.appimage.category",
                     "Development;Java;IDE;",
                     MESSAGES.getString("option.appimagecategory.description"));
@@ -60,7 +60,7 @@ public class AppImagePackager implements Packager {
      * Architecture of AppImage to create. Defaults to parsing from appimagetool
      * file name.
      */
-    public static final Option<String> APPIMAGE_ARCH
+    static final Option<String> APPIMAGE_ARCH
             = Option.ofString("package.appimage.arch",
                     "",
                     MESSAGES.getString("option.appimagearch.description"));

@@ -43,7 +43,7 @@ class InnoSetupTask extends AbstractPackagerTask {
 
     @Override
     public void validateCreatePackage() throws Exception {
-        context().getValue(INNOSETUP_TOOL)
+        context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")));
     }
@@ -65,7 +65,7 @@ class InnoSetupTask extends AbstractPackagerTask {
 
     @Override
     public Path createPackage(Path image) throws Exception {
-        Path tool = context().getValue(INNOSETUP_TOOL)
+        Path tool = context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")))
                 .toAbsolutePath();
@@ -126,7 +126,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     private void setupIcons(Path image, String execName) throws IOException {
-        Path icoFile = context().getValue(INNOSETUP_ICON).orElse(null);
+        Path icoFile = context().getValue(ICON_PATH).orElse(null);
         Path dstFile = image.resolve(execName)
                 .resolve("etc")
                 .resolve(execName + ".ico");
@@ -141,7 +141,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
     
     private void setupLicenseFile(Path image) throws IOException {
-        var license = context().getValue(INNOSETUP_LICENSE).orElse(null);
+        var license = context().getValue(LICENSE_PATH).orElse(null);
         if (license == null) {
             return;
         }
@@ -156,7 +156,7 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     private void createInnoSetupScript(Path image, String execName) throws IOException {
-        Path templateFile = context().getValue(INNOSETUP_TEMPLATE).orElse(null);
+        Path templateFile = context().getValue(ISS_TEMPLATE_PATH).orElse(null);
         String template;
         try (var reader = templateFile != null
                 ? Files.newBufferedReader(templateFile)
@@ -176,7 +176,7 @@ class InnoSetupTask extends AbstractPackagerTask {
 
         String appName = context().getValue(NBPackage.PACKAGE_NAME).orElse(execName);
         String appNameSafe = sanitize(appName);
-        String appID = context().getValue(INNOSETUP_APPID).orElse(appName);
+        String appID = context().getValue(APPID).orElse(appName);
         String appVersion = context().getValue(NBPackage.PACKAGE_VERSION).orElse("1.0");
 
         String appLicense;

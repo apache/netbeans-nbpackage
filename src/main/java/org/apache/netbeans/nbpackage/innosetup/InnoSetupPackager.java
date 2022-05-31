@@ -38,21 +38,21 @@ public class InnoSetupPackager implements Packager {
      * Path to InnoSetup compiler executable. Or to Linux script to invoke via
      * Wine.
      */
-    public static final Option<Path> INNOSETUP_TOOL
+    static final Option<Path> TOOL_PATH
             = Option.ofPath("package.innosetup.tool", "",
                     MESSAGES.getString("option.innosetuptool.description"));
 
     /**
      * InnoSetup App ID.
      */
-    public static final Option<String> INNOSETUP_APPID
+    static final Option<String> APPID
             = Option.ofString("package.innosetup.appid", "",
                     MESSAGES.getString("option.innosetupappid.description"));
 
     /**
      * Path to icon file (*.ico).
      */
-    public static final Option<Path> INNOSETUP_ICON
+    static final Option<Path> ICON_PATH
             = Option.ofPath("package.innosetup.icon", "",
                     MESSAGES.getString("option.innosetupicon.description"));
 
@@ -60,20 +60,20 @@ public class InnoSetupPackager implements Packager {
      * Path to optional license file (*.txt or *.rtf) to display during
      * installation.
      */
-    public static final Option<Path> INNOSETUP_LICENSE
+    static final Option<Path> LICENSE_PATH
             = Option.ofPath("package.innosetup.license", "",
                     MESSAGES.getString("option.innosetuplicense.description"));
 
     /**
      * Path to alternative InnoSetup template.
      */
-    public static final Option<Path> INNOSETUP_TEMPLATE
+    static final Option<Path> ISS_TEMPLATE_PATH
             = Option.ofPath("package.innosetup.template", "",
                     MESSAGES.getString("option.innosetuptemplate.description"));
 
     private static final List<Option<?>> INNOSETUP_OPTIONS
-            = List.of(INNOSETUP_TOOL, INNOSETUP_APPID, INNOSETUP_ICON,
-                    INNOSETUP_LICENSE, INNOSETUP_TEMPLATE);
+            = List.of(TOOL_PATH, APPID, ICON_PATH,
+                    LICENSE_PATH, ISS_TEMPLATE_PATH);
 
     @Override
     public Task createTask(ExecutionContext context) {

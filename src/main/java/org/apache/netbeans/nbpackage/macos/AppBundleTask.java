@@ -32,8 +32,6 @@ import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
 import org.apache.netbeans.nbpackage.StringUtils;
 
-import static org.apache.netbeans.nbpackage.macos.PkgPackager.*;
-
 /**
  *
  */
@@ -125,7 +123,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
 
     private void setupIcons(Path resources, String execName) throws IOException {
-        Path icnsFile = context().getValue(MACOS_ICON).orElse(null);
+        Path icnsFile = context().getValue(MacOS.ICON_PATH).orElse(null);
         Path dstFile = resources.resolve(execName + ".icns");
         if (icnsFile != null) {
             Files.copy(icnsFile, dstFile);
@@ -136,7 +134,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
 
     private void setupInfo(Path contents, String execName) throws IOException {
-        Path templateFile = context().getValue(MACOS_INFO_TEMPLATE).orElse(null);
+        Path templateFile = context().getValue(MacOS.INFO_TEMPLATE_PATH).orElse(null);
         String template;
         try ( var reader = templateFile != null
                 ? Files.newBufferedReader(templateFile)
@@ -152,7 +150,7 @@ class AppBundleTask extends AbstractPackagerTask {
                 "BUNDLE_DISPLAY", context().getValue(NBPackage.PACKAGE_NAME).orElseThrow(),
                 "BUNDLE_VERSION", context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow(),
                 "BUNDLE_EXEC", execName,
-                "BUNDLE_ID", context().getValue(MACOS_BUNDLE_ID)
+                "BUNDLE_ID", context().getValue(MacOS.BUNDLE_ID)
                         .orElse(sanitizeBundleID(getBundleName())),
                 "BUNDLE_ICON", execName + ".icns"
         );

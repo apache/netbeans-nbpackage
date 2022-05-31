@@ -210,8 +210,8 @@ class DebTask extends AbstractPackagerTask {
                 .resolve("hicolor")
                 .resolve("scalable")
                 .resolve("apps");
-        Path icon = context().getValue(DebPackager.DEB_ICON).orElse(null);
-        Path svg = context().getValue(DebPackager.DEB_SVG).orElse(null);
+        Path icon = context().getValue(DebPackager.ICON_PATH).orElse(null);
+        Path svg = context().getValue(DebPackager.SVG_ICON_PATH).orElse(null);
         if (svg != null && icon == null) {
             context().warningHandler().accept(DebPackager.MESSAGES.getString("message.svgnoicon"));
             svg = null;
@@ -254,7 +254,7 @@ class DebTask extends AbstractPackagerTask {
                 });
         Path desktopDir = share.resolve("applications");
         Files.createDirectories(desktopDir);
-        String desktopFileName = context().getValue(DebPackager.DEB_DESKTOP_FILENAME)
+        String desktopFileName = context().getValue(DebPackager.DESKTOP_FILENAME)
                 .map(name -> sanitize(name))
                 .orElse(pkgName);
         Path desktopFile = desktopDir.resolve(desktopFileName + ".desktop");
