@@ -19,11 +19,13 @@
 package org.apache.netbeans.nbpackage;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -31,6 +33,7 @@ import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -235,7 +238,78 @@ public class FileUtils {
             return List.copyOf(stream.collect(Collectors.toList()));
         }
     }
+    
+    /**
+     * Process files inside a JAR file. This can be used, for example, to sign
+     * native executables inside a JAR. Files whose path inside the JAR matches
+     * the given pattern will be extracted into a temporary directory and passed
+     * to the provided processor. If the processor returns true the file will be
+     * updated inside the JAR.
+     *
+     * @param jarFile JAR file
+     * @param pattern glob pattern to match paths for processing
+     * @param processor process files
+     * @return true if the JAR contents have been updated
+     * @throws IOException
+     */
+    public static boolean processJarContents(Path jarFile, String pattern, JarProcessor processor)
+            throws IOException {
+        URI jarURI = URI.create("jar:" + jarFile.toUri());
+        boolean updated = false;
+        try (var jarFS = FileSystems.newFileSystem(jarURI, Map.of())) {
+            PathMatcher matcher = jarFS.getPathMatcher("glob:" + pattern);
+            List<Path> filesToProcess;
+            try (var jarStream = Files.walk(jarFS.getPath("/"))) {
+                filesToProcess = jarStream
+                        .filter(file -> Files.isRegularFile(file))
+                        .filter(matcher::matches)
+                        .collect(Collectors.toList());
+            }
+            if (filesToProcess.isEmpty()) {
+                return false;
+            }
+            Path tmpDir = Files.createTempDirectory("nbpackage-jar-");
+            try {
+                for (Path file : filesToProcess) {
+                    Path tmp = null;
+                    try {
+                        tmp = Files.copy(file, tmpDir.resolve(file.getFileName().toString()));
+                        boolean processed = processor.processFile(tmp, file.toString());
+                        if (processed) {
+                            Files.copy(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+                            updated = true;
+                        }
+                    } finally {
+                        Files.deleteIfExists(tmp);
+                    }
+                }
 
+            } finally {
+                Files.delete(tmpDir);
+            }
+        }
+        return updated;
+    }
+
+    /**
+     * Processor for updating files inside a JAR. For use with
+     * {@link FileUtils#processJarContents(java.nio.file.Path, java.lang.String, org.apache.netbeans.nbpackage.FileUtils.JarProcessor)}.
+     */
+    @FunctionalInterface
+    public static interface JarProcessor {
+
+        /**
+         * Process file from JAR.
+         * 
+         * @param tmpFile path to temporary extracted file
+         * @param jarPath full path inside JAR
+         * @return true to update the file in the JAR
+         * @throws IOException
+         */
+        public boolean processFile(Path tmpFile, String jarPath) throws IOException;
+
+    }
+    
     /**
      * Remove the extension from the given file name, if one exists. Simply
      * removes the last dot and remaining characters.

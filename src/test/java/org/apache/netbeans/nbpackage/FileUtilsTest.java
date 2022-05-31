@@ -18,9 +18,13 @@
  */
 package org.apache.netbeans.nbpackage;
 
+import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,6 +146,67 @@ public class FileUtilsTest {
 
         FileUtils.deleteFiles(tmpDir);
 
+    }
+    
+    @Test
+    public void testProcessJarContents() throws Exception {
+        Path tmpDir = Files.createTempDirectory("nbp-process-jar-");
+        try {
+            Path root = Files.createDirectory(tmpDir.resolve("root"));
+            Path dir1 = Files.createDirectory(root.resolve("dir1"));
+            Path dir2 = Files.createDirectory(root.resolve("dir2"));
+            Path file1 = Files.writeString(dir1.resolve("file1"),
+                    "File One",
+                    StandardOpenOption.CREATE_NEW);
+            Path file2 = Files.writeString(dir2.resolve("file2"),
+                    "File Two",
+                    StandardOpenOption.CREATE_NEW);
+            Path jarFile = tmpDir.resolve("test.jar");
+            FileUtils.createZipArchive(root, jarFile);
+            
+            int[] found = new int[]{0};
+            boolean processed;
+            
+            processed = FileUtils.processJarContents(jarFile, "**/*", (file, path) -> {
+                found[0] = found[0] + 1;
+                Files.writeString(file, "GARBAGE");
+                return false;
+            });
+            
+            assertFalse(processed);
+            assertEquals(2, found[0]);
+            
+            var jarURI = URI.create("jar:" + jarFile.toUri());
+            
+            try (var jarFS = FileSystems.newFileSystem(jarURI, Map.of())) {
+                assertEquals("File One",
+                        Files.readString(jarFS.getPath("dir1", "file1")));
+                assertEquals("File Two",
+                        Files.readString(jarFS.getPath("dir2", "file2")));
+            }
+            
+            found[0] = 0;
+            processed = FileUtils.processJarContents(jarFile, "/dir1/*", (file, path) -> {
+                found[0] = found[0] + 1;
+                assertEquals("file1", file.getFileName().toString());
+                assertEquals("/dir1/file1", path);
+                Files.writeString(file, "FILE ONE UPDATED");
+                return true;
+            });
+            
+            assertTrue(processed);
+            assertEquals(1, found[0]);
+            
+            try (var jarFS = FileSystems.newFileSystem(jarURI, Map.of())) {
+                assertEquals("FILE ONE UPDATED",
+                        Files.readString(jarFS.getPath("dir1", "file1")));
+                assertEquals("File Two",
+                        Files.readString(jarFS.getPath("dir2", "file2")));
+            }
+        } finally {
+            FileUtils.deleteFiles(tmpDir);
+        }
+        
     }
 
 }
