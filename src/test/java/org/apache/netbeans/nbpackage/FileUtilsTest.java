@@ -113,6 +113,38 @@ public class FileUtilsTest {
         assertFalse(Files.exists(parent));
         Files.delete(tmpDir);
     }
+    
+    /**
+     * Test of find method, of class FileUtils.
+     * 
+     * @throws Exception 
+     */
+    @Test
+    public void testFind() throws Exception {
+       Path tmpDir = Files.createTempDirectory("nbp-find-");
+       try {
+           List<Path> found = FileUtils.find(tmpDir, "**");
+           assertTrue(found.isEmpty());
+           Path dir = Files.createDirectory(tmpDir.resolve("dir"));
+           Path file1 = Files.createFile(dir.resolve("file1.ext1"));
+           Path file2 = Files.createFile(tmpDir.resolve("file2.ext2"));
+           found = FileUtils.find(tmpDir, "*");
+           assertEquals(3, found.size());
+           found = FileUtils.find(tmpDir, "dir/*");
+           assertEquals(List.of(file1), found);
+           found = FileUtils.find(tmpDir, "*.{ext1,ext2}");
+           assertEquals(List.of(file1, file2), found);
+           found = FileUtils.find(tmpDir, "**.{ext1,ext2}");
+           assertEquals(List.of(file1, file2), found);
+           found = FileUtils.find(tmpDir, "**/*.{ext1,ext2}");
+           assertEquals(List.of(file1), found);
+           found = FileUtils.find(tmpDir, "*/file2.ext2");
+           assertTrue(found.isEmpty());
+       } finally {
+           FileUtils.deleteFiles(tmpDir);
+       }
+    }
+    
 
     /**
      * Test of findDirs method, of class FileUtils.

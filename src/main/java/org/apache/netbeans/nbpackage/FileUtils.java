@@ -206,6 +206,27 @@ public class FileUtils {
     }
 
     /**
+     * Find all files that match the provided glob pattern within a directory.
+     * Files will be included if their relative path within the directory, or
+     * their filename, match the pattern.
+     *
+     * @param searchDir directory to search within
+     * @param pattern pattern to search for
+     * @return list of files that match pattern
+     * @throws IOException
+     */
+    public static List<Path> find(Path searchDir, String pattern) throws IOException {
+        var matcher = searchDir.getFileSystem().getPathMatcher("glob:" + pattern);
+        try (var stream = Files.find(searchDir, Integer.MAX_VALUE, (file, attr)
+                -> !file.equals(searchDir) && 
+                        (matcher.matches(searchDir.relativize(file)) ||
+                                matcher.matches(file.getFileName()))
+        )) {
+            return stream.collect(Collectors.toList());
+        }
+    }
+
+    /**
      * Find the directories in the given search directory that contains files
      * that match the given glob patterns. This might include the search
      * directory itself. eg. to find NetBeans or a RCP application in a search
@@ -238,7 +259,7 @@ public class FileUtils {
             return List.copyOf(stream.collect(Collectors.toList()));
         }
     }
-    
+
     /**
      * Process files inside a JAR file. This can be used, for example, to sign
      * native executables inside a JAR. Files whose path inside the JAR matches
@@ -300,7 +321,7 @@ public class FileUtils {
 
         /**
          * Process file from JAR.
-         * 
+         *
          * @param tmpFile path to temporary extracted file
          * @param jarPath full path inside JAR
          * @return true to update the file in the JAR
@@ -309,7 +330,7 @@ public class FileUtils {
         public boolean processFile(Path tmpFile, String jarPath) throws IOException;
 
     }
-    
+
     /**
      * Remove the extension from the given file name, if one exists. Simply
      * removes the last dot and remaining characters.
