@@ -53,6 +53,16 @@ public interface Packager {
     }
 
     /**
+     * A stream of packager-specific templates used by this packager. The
+     * default implementation provides an empty stream.
+     *
+     * @return stream of packager-specific templates
+     */
+    public default Stream<Template> templates() {
+        return Stream.empty();
+    }
+
+    /**
      * Task API. A task only supports a single execution. Not all stages of the
      * task may be executed - eg. when only creating a package image or creating
      * a package from an image. The validation methods for all required stages

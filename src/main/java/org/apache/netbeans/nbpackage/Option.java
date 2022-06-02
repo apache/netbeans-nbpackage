@@ -98,6 +98,18 @@ public final class Option<T> {
     }
 
     /**
+     * Create an Option of a String type with empty default value.
+     *
+     * @param key key used to store option in configuration
+     * @param comment help text for user
+     * @return option
+     */
+    public static Option<String> ofString(String key,
+            String comment) {
+        return ofString(key, "", comment);
+    }
+
+    /**
      * Create an Option of a String type.
      *
      * @param key key used to store option in configuration
@@ -109,6 +121,18 @@ public final class Option<T> {
             String defaultValue,
             String comment) {
         return new Option<>(key, String.class, defaultValue, s -> s, comment);
+    }
+
+    /**
+     * Create an option of a Path type with empty default value.
+     *
+     * @param key key used to store option in configuration
+     * @param comment help text for user
+     * @return option
+     */
+    public static Option<Path> ofPath(String key,
+            String comment) {
+        return ofPath(key, "", comment);
     }
 
     /**
@@ -146,7 +170,7 @@ public final class Option<T> {
 
     /**
      * Parser to convert text value into option type.
-     * 
+     *
      * @param <T> option type
      */
     @FunctionalInterface
@@ -154,7 +178,7 @@ public final class Option<T> {
 
         /**
          * Parse text to type.
-         * 
+         *
          * @param text to parse
          * @return value as type
          * @throws Exception on parsing error
