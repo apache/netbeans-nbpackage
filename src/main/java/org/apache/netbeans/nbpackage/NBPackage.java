@@ -204,6 +204,34 @@ public final class NBPackage {
     }
 
     /**
+     * Copy templates to the provided destination. If a package type is
+     * specified in the provided configuration, only templates for that type
+     * will be copied. Template overrides in the configuration will be
+     * respected. The destination must be a directory or not already exist.
+     * Destination files must not already exist.
+     *
+     * @param configuration configuration to restrict / control templates
+     * @param destination directory to copy files in to (will be created if
+     * needed)
+     * @throws IOException if destination is not a directory, or cannot be
+     * created; if the template cannot be loaded; or if the destination file
+     * exists or cannot be created.
+     */
+    public static void copyTemplates(Configuration configuration, Path destination)
+            throws IOException {
+        Files.createDirectories(destination);
+        var type = configuration.getValue(PACKAGE_TYPE);
+        var templates = (type.isBlank() ? templates() : templates(type))
+                .toArray(Template[]::new);
+        for (var template : templates) {
+            var contents = template.load(configuration);
+            Files.writeString(destination.resolve(template.name()),
+                    contents,
+                    StandardOpenOption.CREATE_NEW);
+        }
+    }
+
+    /**
      * Query all available packagers. Not all packagers are guaranteed to run on
      * the current system / OS.
      *
@@ -262,6 +290,26 @@ public final class NBPackage {
     public static Stream<Option<?>> options(String packagerName) {
         return Stream.concat(globalOptions(),
                 findPackager(packagerName).options());
+    }
+
+    /**
+     * Query all templates.
+     *
+     * @return stream of all templates
+     */
+    public static Stream<Template> templates() {
+        return packagers().flatMap(Packager::templates);
+    }
+
+    /**
+     * Query all templates used by the specified packager.
+     *
+     * @param packagerName name of packager
+     * @return stream of templates
+     * @throws IllegalArgumentException if no packager by this name exists
+     */
+    public static Stream<Template> templates(String packagerName) {
+        return findPackager(packagerName).templates();
     }
 
     // @TODO properly escape and support multi-line comments / values

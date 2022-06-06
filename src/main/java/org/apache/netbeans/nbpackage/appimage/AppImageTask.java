@@ -153,12 +153,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     private void setupDesktopFile(Path image, String execName) throws IOException {
-        String template;
-        try ( var reader = new BufferedReader(
-                new InputStreamReader(
-                        getClass().getResourceAsStream("AppImage.desktop.template")))) {
-            template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-        }
+        String template = AppImagePackager.DESKTOP_TEMPLATE.load(context());
         String desktop = StringUtils.replaceTokens(template,
                 key -> "EXEC".equals(key) ? execName : context().tokenReplacementFor(key));
         Path desktopDir = image.resolve("usr")
@@ -172,12 +167,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     private void setupAppRunScript(Path image, String execName) throws IOException {
-        String template;
-        try ( var reader = new BufferedReader(
-                new InputStreamReader(
-                        getClass().getResourceAsStream("AppImage.launcher.template")))) {
-            template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-        }
+        String template = AppImagePackager.LAUNCHER_TEMPLATE.load(context());
         String appRun = StringUtils.replaceTokens(template, Map.of("EXEC", execName));
         Path appRunPath = image.resolve("AppRun");
         Files.writeString(appRunPath, appRun, StandardOpenOption.CREATE_NEW);

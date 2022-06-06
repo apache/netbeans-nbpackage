@@ -75,10 +75,23 @@ public final class Template {
      */
     public String load(ExecutionContext context) throws IOException {
         Path file = context.getValue(option).orElse(null);
+        return loadImpl(file);
+    }
+
+    String load(Configuration config) throws IOException {
+        String optionValue = config.getValue(option);
+        if (!optionValue.isBlank()) {
+            return loadImpl(Path.of(optionValue));
+        } else {
+            return loadImpl(null);
+        }
+    }
+
+    private String loadImpl(Path file) throws IOException {
         if (file != null) {
             return Files.readString(file);
         } else {
-            try ( Reader in = readerProvider.get();  StringWriter out = new StringWriter()) {
+            try (Reader in = readerProvider.get();  StringWriter out = new StringWriter()) {
                 in.transferTo(out);
                 return out.toString();
             }

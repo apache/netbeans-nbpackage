@@ -21,7 +21,6 @@ package org.apache.netbeans.nbpackage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -72,6 +71,10 @@ public class Main {
         @CommandLine.Option(names = {"--save-config"},
                 descriptionKey = "option.saveconfig.description")
         private Path configOut;
+        
+        @CommandLine.Option(names = {"--save-templates"},
+                descriptionKey = "option.savetemplates.description")
+        private Path templatesOut;
 
         @CommandLine.Option(names = {"--image-only"},
                 descriptionKey = "option.imageonly.description")
@@ -88,7 +91,7 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             try {
-                if (input == null && inputImage == null && configOut == null) {
+                if (input == null && inputImage == null && !hasAuxTasks()) {
                     warning(NBPackage.MESSAGES.getString("message.notasks"));
                     return 1;
                 }
@@ -124,6 +127,10 @@ public class Main {
                     NBPackage.writeFullConfiguration(conf, configOut);
                 }
 
+                if (templatesOut != null) {
+                    NBPackage.copyTemplates(conf, templatesOut);
+                }
+                
                 Path dest = output == null ? Path.of("") : output;
 
                 Path created = null;
@@ -160,6 +167,10 @@ public class Main {
             );
             System.out.println(ansiMsg);
         }
+        
+        private boolean hasAuxTasks() {
+            return configOut != null || templatesOut != null;
+        } 
 
     }
 

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.Option;
 import org.apache.netbeans.nbpackage.Packager;
+import org.apache.netbeans.nbpackage.Template;
 
 /**
  * Packager for Windows .exe installer using Inno Setup.
@@ -70,10 +71,20 @@ public class InnoSetupPackager implements Packager {
     static final Option<Path> ISS_TEMPLATE_PATH
             = Option.ofPath("package.innosetup.template", "",
                     MESSAGES.getString("option.innosetuptemplate.description"));
+    
+    /**
+     * ISS file template.
+     */
+    static final Template ISS_TEMPLATE
+            = Template.of(ISS_TEMPLATE_PATH, "InnoSetup.iss.template",
+                    () -> InnoSetupPackager.class.getResourceAsStream("InnoSetup.iss.template"));
 
     private static final List<Option<?>> INNOSETUP_OPTIONS
             = List.of(TOOL_PATH, APPID, ICON_PATH,
                     LICENSE_PATH, ISS_TEMPLATE_PATH);
+    
+    private static final List<Template> INNOSETUP_TEMPLATES
+            = List.of(ISS_TEMPLATE);
 
     @Override
     public Task createTask(ExecutionContext context) {
@@ -90,4 +101,9 @@ public class InnoSetupPackager implements Packager {
         return INNOSETUP_OPTIONS.stream();
     }
 
+    @Override
+    public Stream<Template> templates() {
+        return INNOSETUP_TEMPLATES.stream();
+    }
+    
 }

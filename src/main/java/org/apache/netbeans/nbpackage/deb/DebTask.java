@@ -18,9 +18,7 @@
  */
 package org.apache.netbeans.nbpackage.deb;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
@@ -188,12 +185,7 @@ class DebTask extends AbstractPackagerTask {
 
     private void setupLauncher(Path binDir, String packageLocation, String execName)
             throws IOException {
-        String template;
-        try ( var reader = new BufferedReader(
-                new InputStreamReader(
-                        getClass().getResourceAsStream("deb.launcher.template")))) {
-            template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-        }
+        String template = DebPackager.LAUNCHER_TEMPLATE.load(context());
         String script = StringUtils.replaceTokens(template,
                 Map.of("PACKAGE", packageLocation, "EXEC", execName));
         Path bin = binDir.resolve(execName);
@@ -236,12 +228,7 @@ class DebTask extends AbstractPackagerTask {
     }
 
     private void setupDesktopFile(Path share, String exec, String pkgName) throws IOException {
-        String template;
-        try ( var reader = new BufferedReader(
-                new InputStreamReader(
-                        getClass().getResourceAsStream("deb.desktop.template")))) {
-            template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-        }
+        String template = DebPackager.DESKTOP_TEMPLATE.load(context());
         Map<String, String> tokens = Map.of("EXEC", exec, "ICON", pkgName);
         String desktop = StringUtils.replaceTokens(template,
                 key -> {
@@ -262,12 +249,7 @@ class DebTask extends AbstractPackagerTask {
     }
 
     private void setupControlFile(Path DEBIAN) throws Exception {
-        String template;
-        try ( var reader = new BufferedReader(
-                new InputStreamReader(
-                        getClass().getResourceAsStream("deb.control.template")))) {
-            template = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-        }
+        String template = DebPackager.CONTROL_TEMPLATE.load(context());
         String maintainer = context().getValue(DebPackager.DEB_MAINTAINER)
                 .orElse("");
         if (maintainer.isBlank()) {

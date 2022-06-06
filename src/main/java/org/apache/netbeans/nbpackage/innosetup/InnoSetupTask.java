@@ -156,15 +156,9 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     private void createInnoSetupScript(Path image, String execName) throws IOException {
-        Path templateFile = context().getValue(ISS_TEMPLATE_PATH).orElse(null);
-        String template;
-        try (var reader = templateFile != null
-                ? Files.newBufferedReader(templateFile)
-                : new BufferedReader(
-                        new InputStreamReader(
-                                getClass().getResourceAsStream("InnoSetup.iss.template")))) {
-            template = reader.lines().collect(Collectors.joining("\r\n", "", "\r\n"));
-        }
+        // make sure loaded template has correct line endings
+        String template = ISS_TEMPLATE.load(context()).lines()
+                .collect(Collectors.joining("\r\n", "", "\r\n"));
 
         List<Path> files;
         try (var l = Files.list(image.resolve(execName))) {

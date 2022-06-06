@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.Option;
 import org.apache.netbeans.nbpackage.Packager;
+import org.apache.netbeans.nbpackage.Template;
 
 /**
  * Packager for Linux AppImage, using appimagetool.
@@ -64,12 +65,41 @@ public class AppImagePackager implements Packager {
             = Option.ofString("package.appimage.arch",
                     "",
                     MESSAGES.getString("option.appimagearch.description"));
+    
+    /**
+     * Optional path to custom .desktop template.
+     */
+    static final Option<Path> DESKTOP_TEMPLATE_PATH
+            = Option.ofPath("package.appimage.desktop-template",
+                    MESSAGES.getString("option.desktop_template.description"));
 
-//    public static final Option<Path> APPIMAGE_SVG_ICON
-//            = Option.ofPath("package.appimage.svg", "",
-//                    MESSAGES.getString("option.appimagesvg.description"));
+    /**
+     * Desktop file template.
+     */
+    static final Template DESKTOP_TEMPLATE
+            = Template.of(DESKTOP_TEMPLATE_PATH, "AppImage.desktop.template",
+                    () -> AppImagePackager.class.getResourceAsStream("AppImage.desktop.template"));
+    
+    /**
+     * Optional path to custom AppRun launcher template.
+     */
+    static final Option<Path> LAUNCHER_TEMPLATE_PATH
+            = Option.ofPath("package.appimage.launcher-template",
+                    MESSAGES.getString("option.launcher_template.description"));
+
+    /**
+     * AppRun launcher script template.
+     */
+    static final Template LAUNCHER_TEMPLATE
+            = Template.of(LAUNCHER_TEMPLATE_PATH, "AppImage.launcher.template",
+                    () -> AppImagePackager.class.getResourceAsStream("AppImage.launcher.template"));
+
     private static final List<Option<?>> APPIMAGE_OPTIONS
-            = List.of(APPIMAGE_TOOL, APPIMAGE_ICON, APPIMAGE_CATEGORY, APPIMAGE_ARCH);
+            = List.of(APPIMAGE_TOOL, APPIMAGE_ICON, APPIMAGE_CATEGORY,
+                    APPIMAGE_ARCH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
+    
+    private static final List<Template> APPIMAGE_TEMPLATES
+            = List.of(DESKTOP_TEMPLATE, LAUNCHER_TEMPLATE);
 
     @Override
     public Task createTask(ExecutionContext context) {
@@ -84,6 +114,11 @@ public class AppImagePackager implements Packager {
     @Override
     public Stream<Option<?>> options() {
         return APPIMAGE_OPTIONS.stream();
+    }
+
+    @Override
+    public Stream<Template> templates() {
+        return APPIMAGE_TEMPLATES.stream();
     }
 
 }
