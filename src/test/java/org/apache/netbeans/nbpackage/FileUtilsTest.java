@@ -131,13 +131,13 @@ public class FileUtilsTest {
            found = FileUtils.find(tmpDir, "*");
            assertEquals(3, found.size());
            found = FileUtils.find(tmpDir, "dir/*");
-           assertEquals(List.of(file1), found);
+           assertTrue(found.size() == 1 && found.contains(file1));
            found = FileUtils.find(tmpDir, "*.{ext1,ext2}");
-           assertEquals(List.of(file1, file2), found);
+           assertTrue(found.size() == 2 && found.contains(file1) && found.contains(file2));
            found = FileUtils.find(tmpDir, "**.{ext1,ext2}");
-           assertEquals(List.of(file1, file2), found);
+           assertTrue(found.size() == 2 && found.contains(file1) && found.contains(file2));
            found = FileUtils.find(tmpDir, "**/*.{ext1,ext2}");
-           assertEquals(List.of(file1), found);
+           assertTrue(found.size() == 1 && found.contains(file1));
            found = FileUtils.find(tmpDir, "*/file2.ext2");
            assertTrue(found.isEmpty());
        } finally {
