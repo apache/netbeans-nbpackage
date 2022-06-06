@@ -23,14 +23,26 @@ import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.Option;
 import org.apache.netbeans.nbpackage.Packager;
+import org.apache.netbeans.nbpackage.Template;
 
 /**
  * Packager for macOS PKG installer.
  */
 public class PkgPackager implements Packager {
-    
-    private static final List<Option<?>> PKG_OPTIONS = List.of(MacOS.BUNDLE_ID, MacOS.ICON_PATH);
-    
+
+    private static final List<Option<?>> PKG_OPTIONS = List.of(
+            MacOS.BUNDLE_ID,
+            MacOS.ICON_PATH,
+            MacOS.INFO_TEMPLATE_PATH,
+            MacOS.LAUNCHER_TEMPLATE_PATH,
+            MacOS.ENTITLEMENTS_TEMPLATE_PATH);
+
+    private static final List<Template> PKG_TEMPLATE = List.of(
+            MacOS.INFO_TEMPLATE,
+            MacOS.LAUNCHER_TEMPLATE,
+            MacOS.ENTITLEMENTS_TEMPLATE
+    );
+
     @Override
     public Task createTask(ExecutionContext context) {
         return new PkgTask(context);
@@ -46,4 +58,9 @@ public class PkgPackager implements Packager {
         return PKG_OPTIONS.stream();
     }
 
+    @Override
+    public Stream<Template> templates() {
+        return PKG_TEMPLATE.stream();
+    }
+    
 }
