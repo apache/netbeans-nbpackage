@@ -99,6 +99,19 @@ class MacOS {
     static final Template ENTITLEMENTS_TEMPLATE
             = Template.of(ENTITLEMENTS_TEMPLATE_PATH, "sandbox.plist.template",
                     () -> MacOS.class.getResourceAsStream("sandbox.plist.template"));
+    /**
+     * Codesign ID for signing binaries and app bundle.
+     */
+    static final Option<String> CODESIGN_ID
+            = Option.ofString("package.macos.codesign-id",
+                    MESSAGES.getString("option.codesign_id.description"));
+
+    /**
+     * Pkgbuild ID for signing installer.
+     */
+    static final Option<String> PKGBUILD_ID
+            = Option.ofString("package.macos.pkgbuild-id",
+                    MESSAGES.getString("option.pkgbuild_id.description"));
 
     private MacOS() {
     }

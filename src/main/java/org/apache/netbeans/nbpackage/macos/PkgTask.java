@@ -19,7 +19,10 @@
 package org.apache.netbeans.nbpackage.macos;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.netbeans.nbpackage.ExecutionContext;
+import org.apache.netbeans.nbpackage.NBPackage;
 
 /**
  *
@@ -29,15 +32,45 @@ class PkgTask extends AppBundleTask {
     PkgTask(ExecutionContext context) {
         super(context);
     }
-
+    
     @Override
-    public Path createPackage(Path image) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void validateCreatePackage() throws Exception {
+        super.validateCreatePackage();
+        validateTools("pkgbuild");
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Path createPackage(Path image) throws Exception {
+        Path bundle = super.createPackage(image);
+        String name = context().getValue(NBPackage.PACKAGE_NAME).orElseThrow();
+        String version = context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow();
+        Path output = context().destination().resolve(
+                sanitize(name) + " " + sanitize(version) + ".pkg");
+        String signingID = context().getValue(MacOS.PKGBUILD_ID).orElse("");
+        List<String> command = new ArrayList<>();
+        command.add("pkgbuild");
+        command.add("--component");
+        command.add(bundle.toString());
+        command.add("--version");
+        command.add(version);
+        command.add("--install-location");
+        command.add("/Applications");
+        
+        if (signingID.isBlank()) {
+            context().warningHandler().accept(
+                    MacOS.MESSAGES.getString("message.nopkgbuildid"));
+        } else {
+            command.add("--sign");
+            command.add(signingID);
+        }
+        
+        command.add(output.toString());
+        int result = context().exec(command);
+        if (result != 0) {
+            throw new Exception();
+        } else {
+            return output;
+        }
     }
 
     @Override

@@ -35,7 +35,9 @@ public class PkgPackager implements Packager {
             MacOS.ICON_PATH,
             MacOS.INFO_TEMPLATE_PATH,
             MacOS.LAUNCHER_TEMPLATE_PATH,
-            MacOS.ENTITLEMENTS_TEMPLATE_PATH);
+            MacOS.ENTITLEMENTS_TEMPLATE_PATH,
+            MacOS.CODESIGN_ID,
+            MacOS.PKGBUILD_ID);
 
     private static final List<Template> PKG_TEMPLATE = List.of(
             MacOS.INFO_TEMPLATE,

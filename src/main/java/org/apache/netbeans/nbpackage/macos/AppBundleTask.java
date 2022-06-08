@@ -21,7 +21,11 @@ package org.apache.netbeans.nbpackage.macos;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
@@ -42,6 +46,7 @@ class AppBundleTask extends AbstractPackagerTask {
     private static final String NATIVE_BIN_FILENAME = "nativeBinaries";
     private static final String JAR_BIN_FILENAME = "jarBinaries";
     private static final String ENTITLEMENTS_FILENAME = "sandbox.plist";
+    private static final String LAUNCHER_SRC_DIRNAME = "macos-launcher-src";
     
     private String bundleName;
     
@@ -51,7 +56,13 @@ class AppBundleTask extends AbstractPackagerTask {
     
     @Override
     public void validateCreatePackage() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String[] cmds;
+        if (context().getValue(MacOS.CODESIGN_ID).isEmpty()) {
+            cmds = new String[] {"swift"};
+        } else {
+            cmds = new String[] {"swift", "codesign"};
+        }
+        validateTools(cmds);
     }
     
     @Override
@@ -61,10 +72,7 @@ class AppBundleTask extends AbstractPackagerTask {
         Path contents = bundle.resolve("Contents");
         Path resources = contents.resolve("Resources");
         
-        String execName = findLauncher(
-                resources
-                        .resolve("APPDIR")
-                        .resolve("bin"))
+        String execName = findLauncher(resources.resolve("APPDIR").resolve("bin"))
                 .getFileName().toString();
         Files.move(resources.resolve("APPDIR"), resources.resolve(execName));
         
@@ -80,7 +88,30 @@ class AppBundleTask extends AbstractPackagerTask {
     
     @Override
     public Path createPackage(Path image) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Path bundle = image.resolve(getBundleName() + ".app");
+        
+        String execName = FileUtils.find(bundle, "Contents/Resources/*/bin/*")
+                .stream()
+                .filter(path -> !path.toString().endsWith(".exe"))
+                .findFirst()
+                .map(path -> path.getFileName().toString())
+                .orElseThrow();
+        Path launcher = compileLauncher(image.resolve(LAUNCHER_SRC_DIRNAME));
+        Files.copy(launcher, bundle.resolve("Contents")
+                .resolve("MacOS").resolve(execName),
+                StandardCopyOption.COPY_ATTRIBUTES);
+        
+        String signID = context().getValue(MacOS.CODESIGN_ID).orElse("");
+        if (signID.isBlank()) {
+            context().warningHandler().accept(
+                    MacOS.MESSAGES.getString("message.nocodesignid"));
+            return bundle;
+        }
+        Path entitlements = image.resolve(ENTITLEMENTS_FILENAME);
+        signBinariesInJARs(image, entitlements, signID);
+        signNativeBinaries(image, entitlements, signID);
+        codesign(bundle, entitlements, signID);
+        return bundle;
     }
     
     @Override
@@ -102,7 +133,7 @@ class AppBundleTask extends AbstractPackagerTask {
                 .resolve("Contents")
                 .resolve("Home");
     }
-    
+  
     String getBundleName() {
         if (bundleName == null) {
             var name = sanitize(context().getValue(NBPackage.PACKAGE_NAME).orElseThrow());
@@ -114,7 +145,22 @@ class AppBundleTask extends AbstractPackagerTask {
         return bundleName;
     }
     
-    private String sanitize(String name) {
+    void validateTools(String... tools) throws Exception {
+        if (context().isVerbose()) {
+            context().infoHandler().accept(MessageFormat.format(
+                    MacOS.MESSAGES.getString("message.validatingtools"),
+                    Arrays.toString(tools)));
+        }
+        for (String tool : tools) {
+            if (context().exec(List.of("which", tool)) != 0) {
+                throw new IllegalStateException(MessageFormat.format(
+                        MacOS.MESSAGES.getString("message.missingtool"),
+                        tool));
+            }
+        }
+    }
+    
+    String sanitize(String name) {
         return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
     
@@ -161,7 +207,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
     
     private void setupLauncherSource(Path image) throws IOException {
-        Path launcherProject = image.resolve("macos-launcher-src");
+        Path launcherProject = image.resolve(LAUNCHER_SRC_DIRNAME);
         Files.createDirectories(launcherProject);
         Path sourceDir = launcherProject.resolve("Sources").resolve("AppLauncher");
         Files.createDirectories(sourceDir);
@@ -193,6 +239,73 @@ class AppBundleTask extends AbstractPackagerTask {
                         .map(Path::toString)
                         .collect(Collectors.joining("\n", "", "\n")),
                 StandardOpenOption.CREATE_NEW);
+    }
+    
+    private Path compileLauncher(Path launcherProject) throws IOException, InterruptedException {
+        var pb = new ProcessBuilder("swift", "build",
+                "--configuration", "release",
+                "--arch", "x86_64");
+        pb.directory(launcherProject.toFile());
+        context().exec(pb);
+        Path launcher = launcherProject.resolve(".build/release/AppLauncher");
+        if (!Files.exists(launcher)) {
+            throw new IOException(launcher.toString());
+        }
+        return launcher;
+    }
+    
+    private void signBinariesInJARs(Path image, Path entitlements, String id)
+            throws IOException {
+        Path jarFiles = image.resolve(JAR_BIN_FILENAME);
+        if (!Files.exists(jarFiles)) {
+            return;
+        }
+        List<Path> jars = Files.readString(jarFiles).lines()
+                .filter(l -> !l.isBlank())
+                .map(Path::of)
+                .map(image::resolve)
+                .collect(Collectors.toList());
+        for (Path jar : jars) {
+            FileUtils.processJarContents(jar,
+                    DEFAULT_JAR_INTERNAL_BIN_GLOB,
+                    (file, path) -> {
+                        codesign(file, entitlements, id);
+                        return true;
+                    }
+            );
+        }
+    }
+    
+    private void signNativeBinaries(Path image, Path entitlements, String id)
+            throws IOException  {
+        Path nativeFiles = image.resolve(NATIVE_BIN_FILENAME);
+        if (!Files.exists(nativeFiles)) {
+            return;
+        }
+        List<Path> files = Files.readString(nativeFiles).lines()
+                .filter(l -> !l.isBlank())
+                .map(Path::of)
+                .map(image::resolve)
+                .collect(Collectors.toList());
+        for (Path file : files) {
+            codesign(file, entitlements, id);
+        }
+    }
+
+    private void codesign(Path file, Path entitlements, String id)
+            throws IOException {
+        try {
+            context().exec("codesign",
+                    "--force",
+                    "--timestamp",
+                    "--options=runtime",
+                    "--entitlements", entitlements.toString(),
+                    "-s", id,
+                    "-v",
+                    file.toString());
+        } catch (InterruptedException ex) {
+            throw new IOException(ex);
+        }
     }
     
 }
