@@ -1,6 +1,6 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=${package.name} ${package.version}
+Name=${package.name}
 Exec=${EXEC}
 Icon=${ICON}
 Categories=${package.deb.category}
