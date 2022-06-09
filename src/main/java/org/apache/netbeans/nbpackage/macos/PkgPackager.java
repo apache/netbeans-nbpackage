@@ -36,6 +36,8 @@ public class PkgPackager implements Packager {
             MacOS.INFO_TEMPLATE_PATH,
             MacOS.LAUNCHER_TEMPLATE_PATH,
             MacOS.ENTITLEMENTS_TEMPLATE_PATH,
+            MacOS.SIGNING_FILES,
+            MacOS.SIGNING_JARS,
             MacOS.CODESIGN_ID,
             MacOS.PKGBUILD_ID);
 

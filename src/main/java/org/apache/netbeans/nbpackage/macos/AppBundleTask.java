@@ -39,10 +39,7 @@ import org.apache.netbeans.nbpackage.StringUtils;
  */
 class AppBundleTask extends AbstractPackagerTask {
     
-    static final String DEFAULT_BIN_GLOB = "{*.dylib,*.jnilib,**/nativeexecution/MacOSX-*/*,Contents/Home/bin/*,Contents/Home/lib/jspawnhelper}";
-    static final String DEFAULT_JAR_BIN_GLOB = "{jna-5*.jar,junixsocket-native-common-*.jar,launcher-common-*.jar,jansi-*.jar,nbi-engine.jar}";
-    static final String DEFAULT_JAR_INTERNAL_BIN_GLOB = "**/*.{dylib,jnilib}";
-    
+    private static final String DEFAULT_JAR_INTERNAL_BIN_GLOB = "**/*.{dylib,jnilib}";
     private static final String NATIVE_BIN_FILENAME = "nativeBinaries";
     private static final String JAR_BIN_FILENAME = "jarBinaries";
     private static final String ENTITLEMENTS_FILENAME = "sandbox.plist";
@@ -225,14 +222,16 @@ class AppBundleTask extends AbstractPackagerTask {
         Files.writeString(image.resolve(ENTITLEMENTS_FILENAME),
                 MacOS.ENTITLEMENTS_TEMPLATE.load(context())
                 , StandardOpenOption.CREATE_NEW);
-        var nativeBinaries = FileUtils.find(bundle, DEFAULT_BIN_GLOB);
+        var nativeBinaries = FileUtils.find(bundle,
+                context().getValue(MacOS.SIGNING_FILES).orElseThrow());
         Files.writeString(image.resolve(NATIVE_BIN_FILENAME),
                 nativeBinaries.stream()
                         .map(path -> image.relativize(path))
                         .map(Path::toString)
                         .collect(Collectors.joining("\n", "", "\n")),
                 StandardOpenOption.CREATE_NEW);
-        var jarBinaries = FileUtils.find(bundle, DEFAULT_JAR_BIN_GLOB);
+        var jarBinaries = FileUtils.find(bundle,
+                context().getValue(MacOS.SIGNING_JARS).orElseThrow());
         Files.writeString(image.resolve(JAR_BIN_FILENAME),
                 jarBinaries.stream()
                         .map(path -> image.relativize(path))

@@ -28,6 +28,9 @@ import org.apache.netbeans.nbpackage.Template;
  */
 class MacOS {
 
+    private static final String DEFAULT_BIN_GLOB = "{*.dylib,*.jnilib,**/nativeexecution/MacOSX-*/*,Contents/Home/bin/*,Contents/Home/lib/jspawnhelper}";
+    private static final String DEFAULT_JAR_BIN_GLOB = "{jna-5*.jar,junixsocket-native-common-*.jar,launcher-common-*.jar,jansi-*.jar,nbi-engine.jar}";
+
     static final ResourceBundle MESSAGES
             = ResourceBundle.getBundle(PkgPackager.class.getPackageName() + ".Messages");
 
@@ -99,6 +102,22 @@ class MacOS {
     static final Template ENTITLEMENTS_TEMPLATE
             = Template.of(ENTITLEMENTS_TEMPLATE_PATH, "sandbox.plist.template",
                     () -> MacOS.class.getResourceAsStream("sandbox.plist.template"));
+
+    /**
+     * Search pattern for files that need to be code signed.
+     */
+    static final Option<String> SIGNING_FILES
+            = Option.ofString("package.macos.codesign-files", DEFAULT_BIN_GLOB,
+                    MESSAGES.getString("option.codesign_files.description"));
+
+    /**
+     * Search pattern for JARs containing native binaries that need to be code
+     * signed.
+     */
+    static final Option<String> SIGNING_JARS
+            = Option.ofString("package.macos.codesign-jars", DEFAULT_JAR_BIN_GLOB,
+                    MESSAGES.getString("option.codesign_jars.description"));
+
     /**
      * Codesign ID for signing binaries and app bundle.
      */
