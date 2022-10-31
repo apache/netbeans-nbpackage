@@ -55,6 +55,11 @@ configuration file.
 Create a Linux DEB package. Requires `dpkg`, `dpkg-deb` and `fakeroot` to be
 available on the system.
 
+### `--type linux-rpm`
+
+Create a Linux RPM package. Requires `rpm` and `rpmbuild` to be
+available on the system.
+
 ### `--type windows-innosetup`
 
 Create a Windows [Inno Setup][innosetup] installer. Requires download of the

@@ -1,0 +1,23 @@
+Name:           ${RPM_PACKAGE}
+Version:        ${RPM_VERSION}
+Release:        0
+Summary:        ${RPM_SUMMARY}
+License:        Apache License 2.0
+Group:          Development/Tools/IDE
+URL:            https://netbeans.apache.org/
+BuildArch:      ${RPM_ARCH}
+Packager:       ${RPM_MAINTAINER}
+Vendor:         Apache NetBeans
+Requires:       java >= 11
+Recommends:     ${RPM_RECOMMENDS}
+AutoReqProv:    no
+
+%description
+${RPM_DESCRIPTION}
+
+%files
+%{_bindir}/netbeans
+%{_libdir}/%{name}/*
+%{_datadir}/applications/%{name}.desktop
+%{_datadir}/icons/hicolor/48x48/apps/%{name}.png
+%{_datadir}/icons/hicolor/scalable/apps/%{name}.svg
