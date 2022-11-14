@@ -9,3 +9,6 @@ Parts of this software are derived from the libgdx Packr project, under Apache L
   Copyright (c) 2020 Daniel Ludwig, code-disaster, codi at code-disaster dot com
   Copyright (c) 2020 Karl Sabo, Nimbly Games, karl@nimblygames.com
   Copyright (c) 2020 petoncle, albert.petoncle47@gmail.com
+
+Launch scripts are derived from templates in the AppAssembler plugin, under MIT license.
+  Copyright 2006-2012 The Codehaus.
