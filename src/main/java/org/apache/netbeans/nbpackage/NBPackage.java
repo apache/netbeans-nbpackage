@@ -19,11 +19,14 @@
 package org.apache.netbeans.nbpackage;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.stream.Stream;
 import org.apache.netbeans.nbpackage.appimage.AppImagePackager;
@@ -310,6 +313,28 @@ public final class NBPackage {
      */
     public static Stream<Template> templates(String packagerName) {
         return findPackager(packagerName).templates();
+    }
+
+    /**
+     * Query NBPackage version (if available).
+     *
+     * @return version or empty optional if no version information
+     */
+    public static Optional<String> version() {
+        String version = null;
+
+        try (InputStream pomProps = NBPackage.class.getResourceAsStream(
+                "/META-INF/maven/org.apache.netbeans/nbpackage/pom.properties")) {
+            if (pomProps != null) {
+                Properties p = new Properties();
+                p.load(pomProps);
+                version = p.getProperty("version");
+            }
+        } catch (Exception ex) {
+            // fall through
+        }
+
+        return Optional.ofNullable(version);
     }
 
     // @TODO properly escape and support multi-line comments / values

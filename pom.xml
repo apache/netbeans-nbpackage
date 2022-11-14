@@ -28,7 +28,7 @@ under the License.
   
   <groupId>org.apache.netbeans</groupId>
   <artifactId>nbpackage</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0-beta1-SNAPSHOT</version>
   <packaging>jar</packaging>
   
   <name>Apache NetBeans NBPackage</name>

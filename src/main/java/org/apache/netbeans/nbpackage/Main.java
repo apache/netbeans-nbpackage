@@ -21,6 +21,7 @@ package org.apache.netbeans.nbpackage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -43,7 +44,7 @@ public class Main {
         System.exit(ret);
     }
 
-    @CommandLine.Command(mixinStandardHelpOptions = true)
+    @CommandLine.Command(mixinStandardHelpOptions = true, versionProvider = VersionProvider.class)
     private static class Launcher implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-t", "--type"},
@@ -71,7 +72,7 @@ public class Main {
         @CommandLine.Option(names = {"--save-config"},
                 descriptionKey = "option.saveconfig.description")
         private Path configOut;
-        
+
         @CommandLine.Option(names = {"--save-templates"},
                 descriptionKey = "option.savetemplates.description")
         private Path templatesOut;
@@ -116,7 +117,7 @@ public class Main {
                         cb.set(opt, value);
                     });
                 }
-                
+
                 if (verbose) {
                     cb.verbose();
                 }
@@ -130,7 +131,7 @@ public class Main {
                 if (templatesOut != null) {
                     NBPackage.copyTemplates(conf, templatesOut);
                 }
-                
+
                 Path dest = output == null ? Path.of("") : output;
 
                 Path created = null;
@@ -167,10 +168,10 @@ public class Main {
             );
             System.out.println(ansiMsg);
         }
-        
+
         private boolean hasAuxTasks() {
             return configOut != null || templatesOut != null;
-        } 
+        }
 
     }
 
@@ -179,6 +180,19 @@ public class Main {
         @Override
         public Iterator<String> iterator() {
             return NBPackage.packagers().map(Packager::name).sorted().iterator();
+        }
+
+    }
+
+    private static class VersionProvider implements CommandLine.IVersionProvider {
+
+        @Override
+        public String[] getVersion() throws Exception {
+            String msg = MessageFormat.format(
+                    NBPackage.MESSAGES.getString("message.version"),
+                    NBPackage.version().orElse("<DEV>")
+            );
+            return new String[]{msg};
         }
 
     }
