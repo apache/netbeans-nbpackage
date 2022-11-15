@@ -271,8 +271,8 @@ public final class ExecutionContext {
      * Get the value of the provided {@link Option} if set. Tokens in the text
      * will be replaced before the option is parsed.
      * <p>
-     * Will return {@link Optional#EMPTY} if the value has not been set and has
-     * no default. Will throw an exception if a value exists and cannot be
+     * Will return {@link Optional#empty()} if the value has not been set and
+     * has no default. Will throw an exception if a value exists and cannot be
      * parsed by the option.
      *
      * @param <T> option type
@@ -352,8 +352,8 @@ public final class ExecutionContext {
 
     /**
      * Default token lookup. Useful if a task wants to provide its own token
-     * value source in
-     * {@link #replaceTokens(java.lang.String, java.util.function.UnaryOperator)}
+     * value source in eg.
+     * {@link StringUtils#replaceTokens(java.lang.String, java.util.function.Function)}
      * but fallback to the default token replacement.
      *
      * @param token key to replace

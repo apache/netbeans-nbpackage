@@ -34,6 +34,11 @@ public abstract class AbstractPackagerTask implements Packager.Task {
 
     private final ExecutionContext context;
 
+    /**
+     * Create task with provided context.
+     * 
+     * @param context execution context
+     */
     protected AbstractPackagerTask(ExecutionContext context) {
         this.context = Objects.requireNonNull(context);
     }
@@ -57,7 +62,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      *
      * @param input file or directory
      * @return path to image
-     * @throws Exception
+     * @throws Exception if unable to create image
      */
     @Override
     public Path createImage(Path input) throws Exception {
@@ -132,7 +137,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      *
      * @param image image directory
      * @return resolved application path inside image
-     * @throws Exception
+     * @throws Exception if unable to compute path
      */
     protected Path applicationDirectory(Path image) throws Exception {
         return image;
@@ -147,7 +152,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      * @param image image path
      * @param application application path
      * @return resolved runtime path inside image
-     * @throws Exception
+     * @throws Exception if unable to compute path
      */
     protected Path runtimeDirectory(Path image, Path application) throws Exception {
         return application.resolve("jdk");

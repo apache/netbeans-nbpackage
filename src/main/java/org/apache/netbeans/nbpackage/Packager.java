@@ -101,10 +101,10 @@ public interface Packager {
 
         /**
          * Create a package from the image and additional files created by
-         * {@link #createImage()} and
-         * {@link #createBuildFiles(java.nio.file.Path)}.
+         * {@link #createImage(java.nio.file.Path)}.
          *
-         * @param image image created by {@link #createImage()}
+         * @param image image created by
+         * {@link #createImage(java.nio.file.Path)}
          * @return path to created package
          * @throws Exception on execution failure
          */
