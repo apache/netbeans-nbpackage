@@ -7,7 +7,7 @@ Group:          Development/Tools/IDE
 URL:            https://netbeans.apache.org/
 BuildArch:      ${RPM_ARCH}
 Packager:       ${RPM_MAINTAINER}
-Vendor:         Apache NetBeans
+Vendor:         ${RPM_VENDOR}
 Requires:       java >= 11
 Recommends:     ${RPM_RECOMMENDS}
 AutoReqProv:    no
