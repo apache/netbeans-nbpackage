@@ -266,6 +266,7 @@ class RpmTask extends AbstractPackagerTask {
         if (maintainer.isBlank()) {
             context().warningHandler().accept(RpmPackager.MESSAGES.getString("message.nomaintainer"));
         }
+        String license = context().getValue(RpmPackager.RPM_LICENSE).orElse("");
         String summary = context().getValue(RpmPackager.RPM_SUMMARY).orElse("");
         String description = context().getValue(RpmPackager.RPM_DESCRIPTION).orElse("");
         String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
@@ -278,6 +279,7 @@ class RpmTask extends AbstractPackagerTask {
                 "RPM_SUMMARY", summary,
                 "RPM_ARCH", packageArch(),
                 "RPM_MAINTAINER", maintainer,
+                "RPM_LICENSE", license,
                 "RPM_DESCRIPTION", description,
                 "RPM_RECOMMENDS", recommends
         ));

@@ -2,7 +2,7 @@ Name:           ${RPM_PACKAGE}
 Version:        ${RPM_VERSION}
 Release:        0
 Summary:        ${RPM_SUMMARY}
-License:        Apache License 2.0
+License:        ${RPM_LICENSE}
 Group:          Development/Tools/IDE
 URL:            https://netbeans.apache.org/
 BuildArch:      ${RPM_ARCH}
