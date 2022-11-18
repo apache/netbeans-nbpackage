@@ -8,7 +8,6 @@ URL:            ${RPM_URL}
 BuildArch:      ${RPM_ARCH}
 Packager:       ${RPM_MAINTAINER}
 Vendor:         ${RPM_VENDOR}
-Requires:       java >= 11
 Recommends:     ${RPM_RECOMMENDS}
 AutoReqProv:    no
 
