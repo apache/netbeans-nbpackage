@@ -93,14 +93,14 @@ public class RpmPackager implements Packager {
      * Software license.
      */
     static final Option<String> RPM_LICENSE
-            = Option.ofString("package.rpm.license", "",
+            = Option.ofString("package.rpm.license", "Unknown",
                     MESSAGES.getString("option.license.description"));
     
     /**
      * RPM group.
      */
     static final Option<String> RPM_GROUP
-            = Option.ofString("package.rpm.group", "",
+            = Option.ofString("package.rpm.group", "Unknown",
                     MESSAGES.getString("option.group.description"));
 
     /**
