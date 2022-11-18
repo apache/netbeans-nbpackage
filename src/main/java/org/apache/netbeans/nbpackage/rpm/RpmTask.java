@@ -269,23 +269,25 @@ class RpmTask extends AbstractPackagerTask {
         String vendor = context().getValue(RpmPackager.RPM_VENDOR).orElse(maintainer);
         String license = context().getValue(RpmPackager.RPM_LICENSE).orElse("");
         String group = context().getValue(RpmPackager.RPM_GROUP).orElse("");
+        String url = context().getValue(RpmPackager.RPM_URL).orElse("");
         String summary = context().getValue(RpmPackager.RPM_SUMMARY).orElse("");
         String description = context().getValue(RpmPackager.RPM_DESCRIPTION).orElse("");
         String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
                 ? ""
                 : "java-devel >= 11";
 
-        String spec = StringUtils.replaceTokens(template, Map.of(
-                "RPM_PACKAGE", packageName(),
-                "RPM_VERSION", packageVersion(),
-                "RPM_SUMMARY", summary,
-                "RPM_ARCH", packageArch(),
-                "RPM_MAINTAINER", maintainer,
-                "RPM_VENDOR", vendor,
-                "RPM_LICENSE", license,
-                "RPM_GROUP", group,
-                "RPM_DESCRIPTION", description,
-                "RPM_RECOMMENDS", recommends
+        String spec = StringUtils.replaceTokens(template, Map.ofEntries(
+                Map.entry("RPM_PACKAGE", packageName()),
+                Map.entry("RPM_VERSION", packageVersion()),
+                Map.entry("RPM_SUMMARY", summary),
+                Map.entry("RPM_ARCH", packageArch()),
+                Map.entry("RPM_MAINTAINER", maintainer),
+                Map.entry("RPM_VENDOR", vendor),
+                Map.entry("RPM_LICENSE", license),
+                Map.entry("RPM_GROUP", group),
+                Map.entry("RPM_URL", url),
+                Map.entry("RPM_DESCRIPTION", description),
+                Map.entry("RPM_RECOMMENDS", recommends)
         ));
        
         Path specFile = specsDir.resolve(packageName + ".spec");

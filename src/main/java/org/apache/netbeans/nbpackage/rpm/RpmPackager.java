@@ -102,6 +102,13 @@ public class RpmPackager implements Packager {
     static final Option<String> RPM_GROUP
             = Option.ofString("package.rpm.group", "Unknown",
                     MESSAGES.getString("option.group.description"));
+    
+    /**
+     * URL of the software's website.
+     */
+    static final Option<String> RPM_URL
+            = Option.ofString("package.rpm.url", "Unknown",
+                    MESSAGES.getString("option.url.description"));
 
     /**
      * Package summary for the RPM spec.
@@ -164,7 +171,7 @@ public class RpmPackager implements Packager {
     private static final List<Option<?>> RPM_OPTIONS
             = List.of(ICON_PATH, SVG_ICON_PATH, DESKTOP_FILENAME, DESKTOP_WMCLASS,
                     DESKTOP_CATEGORY, RPM_MAINTAINER, RPM_VENDOR, 
-                    RPM_LICENSE, RPM_GROUP, RPM_DESCRIPTION,
+                    RPM_LICENSE, RPM_GROUP, RPM_URL, RPM_DESCRIPTION,
                     SPEC_TEMPLATE_PATH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
 
     private static final List<Template> RPM_TEMPLATES

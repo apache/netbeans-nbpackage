@@ -4,7 +4,7 @@ Release:        0
 Summary:        ${RPM_SUMMARY}
 License:        ${RPM_LICENSE}
 Group:          ${RPM_GROUP}
-URL:            https://netbeans.apache.org/
+URL:            ${RPM_URL}
 BuildArch:      ${RPM_ARCH}
 Packager:       ${RPM_MAINTAINER}
 Vendor:         ${RPM_VENDOR}
