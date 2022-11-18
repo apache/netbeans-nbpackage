@@ -15,7 +15,7 @@ AutoReqProv:    no
 ${RPM_DESCRIPTION}
 
 %files
-%{_bindir}/netbeans
+%{_bindir}/${RPM_EXECNAME}
 %{_libdir}/%{name}/*
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/48x48/apps/%{name}.png

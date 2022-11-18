@@ -97,7 +97,7 @@ class RpmTask extends AbstractPackagerTask {
         
         Path specsDir = image.resolve("SPECS");
         Files.createDirectories(specsDir);
-        setupSpecFile(specsDir);
+        setupSpecFile(specsDir, execName);
         
         return image;
     }
@@ -259,7 +259,7 @@ class RpmTask extends AbstractPackagerTask {
         Files.writeString(desktopFile, desktop, StandardOpenOption.CREATE_NEW);
     }
 
-    private void setupSpecFile(Path specsDir) throws Exception {
+    private void setupSpecFile(Path specsDir, String execName) throws Exception {
         String template = RpmPackager.SPEC_TEMPLATE.load(context());
         String maintainer = context().getValue(RpmPackager.RPM_MAINTAINER)
                 .orElse("");
@@ -287,7 +287,8 @@ class RpmTask extends AbstractPackagerTask {
                 Map.entry("RPM_GROUP", group),
                 Map.entry("RPM_URL", url),
                 Map.entry("RPM_DESCRIPTION", description),
-                Map.entry("RPM_RECOMMENDS", recommends)
+                Map.entry("RPM_RECOMMENDS", recommends),
+                Map.entry("RPM_EXECNAME", execName)
         ));
        
         Path specFile = specsDir.resolve(packageName + ".spec");
