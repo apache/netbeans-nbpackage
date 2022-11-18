@@ -95,6 +95,13 @@ public class RpmPackager implements Packager {
     static final Option<String> RPM_LICENSE
             = Option.ofString("package.rpm.license", "",
                     MESSAGES.getString("option.license.description"));
+    
+    /**
+     * RPM group.
+     */
+    static final Option<String> RPM_GROUP
+            = Option.ofString("package.rpm.group", "",
+                    MESSAGES.getString("option.group.description"));
 
     /**
      * Package summary for the RPM spec.
@@ -156,7 +163,8 @@ public class RpmPackager implements Packager {
 
     private static final List<Option<?>> RPM_OPTIONS
             = List.of(ICON_PATH, SVG_ICON_PATH, DESKTOP_FILENAME, DESKTOP_WMCLASS,
-                    DESKTOP_CATEGORY, RPM_MAINTAINER, RPM_VENDOR, RPM_LICENSE, RPM_DESCRIPTION,
+                    DESKTOP_CATEGORY, RPM_MAINTAINER, RPM_VENDOR, 
+                    RPM_LICENSE, RPM_GROUP, RPM_DESCRIPTION,
                     SPEC_TEMPLATE_PATH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
 
     private static final List<Template> RPM_TEMPLATES

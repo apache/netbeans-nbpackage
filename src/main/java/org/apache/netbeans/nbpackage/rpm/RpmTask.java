@@ -268,6 +268,7 @@ class RpmTask extends AbstractPackagerTask {
         }
         String vendor = context().getValue(RpmPackager.RPM_VENDOR).orElse(maintainer);
         String license = context().getValue(RpmPackager.RPM_LICENSE).orElse("");
+        String group = context().getValue(RpmPackager.RPM_GROUP).orElse("");
         String summary = context().getValue(RpmPackager.RPM_SUMMARY).orElse("");
         String description = context().getValue(RpmPackager.RPM_DESCRIPTION).orElse("");
         String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
@@ -282,6 +283,7 @@ class RpmTask extends AbstractPackagerTask {
                 "RPM_MAINTAINER", maintainer,
                 "RPM_VENDOR", vendor,
                 "RPM_LICENSE", license,
+                "RPM_GROUP", group,
                 "RPM_DESCRIPTION", description,
                 "RPM_RECOMMENDS", recommends
         ));

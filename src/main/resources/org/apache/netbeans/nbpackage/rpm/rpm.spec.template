@@ -3,7 +3,7 @@ Version:        ${RPM_VERSION}
 Release:        0
 Summary:        ${RPM_SUMMARY}
 License:        ${RPM_LICENSE}
-Group:          Development/Tools/IDE
+Group:          ${RPM_GROUP}
 URL:            https://netbeans.apache.org/
 BuildArch:      ${RPM_ARCH}
 Packager:       ${RPM_MAINTAINER}
