@@ -1,0 +1,22 @@
+Name:           ${RPM_PACKAGE}
+Version:        ${RPM_VERSION}
+Release:        0
+Summary:        ${RPM_SUMMARY}
+License:        ${RPM_LICENSE}
+Group:          ${RPM_GROUP}
+URL:            ${RPM_URL}
+BuildArch:      ${RPM_ARCH}
+Packager:       ${RPM_MAINTAINER}
+Vendor:         ${RPM_VENDOR}
+Recommends:     ${RPM_RECOMMENDS}
+AutoReqProv:    no
+
+%description
+${RPM_DESCRIPTION}
+
+%files
+%{_bindir}/${RPM_EXECNAME}
+%{_libdir}/%{name}/*
+%{_datadir}/applications/%{name}.desktop
+%{_datadir}/icons/hicolor/48x48/apps/%{name}.png
+%{_datadir}/icons/hicolor/scalable/apps/%{name}.svg

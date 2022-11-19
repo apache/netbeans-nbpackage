@@ -33,6 +33,7 @@ import org.apache.netbeans.nbpackage.appimage.AppImagePackager;
 import org.apache.netbeans.nbpackage.deb.DebPackager;
 import org.apache.netbeans.nbpackage.innosetup.InnoSetupPackager;
 import org.apache.netbeans.nbpackage.macos.PkgPackager;
+import org.apache.netbeans.nbpackage.rpm.RpmPackager;
 import org.apache.netbeans.nbpackage.zip.ZipPackager;
 
 /**
@@ -72,6 +73,7 @@ public final class NBPackage {
     private static final List<Packager> PACKAGERS = List.of(
             new AppImagePackager(),
             new DebPackager(),
+            new RpmPackager(),
             new InnoSetupPackager(),
             new PkgPackager(),
             new ZipPackager()
