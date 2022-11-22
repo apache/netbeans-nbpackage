@@ -40,14 +40,14 @@ public class AppImagePackager implements Packager {
      */
     static final Option<Path> APPIMAGE_TOOL
             = Option.ofPath("package.appimage.tool", "",
-                    MESSAGES.getString("option.appimagetool.description"));
+                    MESSAGES.getString("option.appimagetool.help"));
 
     /**
      * Path to png icon (48x48) as required by AppDir / XDG specification.
      */
     static final Option<Path> APPIMAGE_ICON
             = Option.ofPath("package.appimage.icon", "",
-                    MESSAGES.getString("option.appimageicon.description"));
+                    MESSAGES.getString("option.appimageicon.help"));
 
     /**
      * Category (or categories) to set in .desktop file.
@@ -55,7 +55,7 @@ public class AppImagePackager implements Packager {
     static final Option<String> APPIMAGE_CATEGORY
             = Option.ofString("package.appimage.category",
                     "Development;Java;IDE;",
-                    MESSAGES.getString("option.appimagecategory.description"));
+                    MESSAGES.getString("option.appimagecategory.help"));
 
     /**
      * Architecture of AppImage to create. Defaults to parsing from appimagetool
@@ -64,14 +64,14 @@ public class AppImagePackager implements Packager {
     static final Option<String> APPIMAGE_ARCH
             = Option.ofString("package.appimage.arch",
                     "",
-                    MESSAGES.getString("option.appimagearch.description"));
+                    MESSAGES.getString("option.appimagearch.help"));
     
     /**
      * Optional path to custom .desktop template.
      */
     static final Option<Path> DESKTOP_TEMPLATE_PATH
             = Option.ofPath("package.appimage.desktop-template",
-                    MESSAGES.getString("option.desktop_template.description"));
+                    MESSAGES.getString("option.desktop_template.help"));
 
     /**
      * Desktop file template.
@@ -85,7 +85,7 @@ public class AppImagePackager implements Packager {
      */
     static final Option<Path> LAUNCHER_TEMPLATE_PATH
             = Option.ofPath("package.appimage.launcher-template",
-                    MESSAGES.getString("option.launcher_template.description"));
+                    MESSAGES.getString("option.launcher_template.help"));
 
     /**
      * AppRun launcher script template.

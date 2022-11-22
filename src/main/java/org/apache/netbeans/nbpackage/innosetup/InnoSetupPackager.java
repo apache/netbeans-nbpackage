@@ -41,21 +41,21 @@ public class InnoSetupPackager implements Packager {
      */
     static final Option<Path> TOOL_PATH
             = Option.ofPath("package.innosetup.tool", "",
-                    MESSAGES.getString("option.innosetuptool.description"));
+                    MESSAGES.getString("option.innosetuptool.help"));
 
     /**
      * InnoSetup App ID.
      */
     static final Option<String> APPID
             = Option.ofString("package.innosetup.appid", "",
-                    MESSAGES.getString("option.innosetupappid.description"));
+                    MESSAGES.getString("option.innosetupappid.help"));
 
     /**
      * Path to icon file (*.ico).
      */
     static final Option<Path> ICON_PATH
             = Option.ofPath("package.innosetup.icon", "",
-                    MESSAGES.getString("option.innosetupicon.description"));
+                    MESSAGES.getString("option.innosetupicon.help"));
 
     /**
      * Path to optional license file (*.txt or *.rtf) to display during
@@ -63,14 +63,14 @@ public class InnoSetupPackager implements Packager {
      */
     static final Option<Path> LICENSE_PATH
             = Option.ofPath("package.innosetup.license", "",
-                    MESSAGES.getString("option.innosetuplicense.description"));
+                    MESSAGES.getString("option.innosetuplicense.help"));
 
     /**
      * Path to alternative InnoSetup template.
      */
     static final Option<Path> ISS_TEMPLATE_PATH
             = Option.ofPath("package.innosetup.template", "",
-                    MESSAGES.getString("option.innosetuptemplate.description"));
+                    MESSAGES.getString("option.innosetuptemplate.help"));
     
     /**
      * ISS file template.

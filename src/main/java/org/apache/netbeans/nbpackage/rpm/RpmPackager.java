@@ -41,7 +41,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<Path> ICON_PATH
             = Option.ofPath("package.rpm.icon", "",
-                    MESSAGES.getString("option.icon.description"));
+                    MESSAGES.getString("option.icon.help"));
 
     /**
      * Path to svg icon. Will only be used if RPM_ICON is also set. Defaults to
@@ -49,7 +49,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<Path> SVG_ICON_PATH
             = Option.ofPath("package.rpm.svg-icon", "",
-                    MESSAGES.getString("option.svg.description"));
+                    MESSAGES.getString("option.svg.help"));
 
     /**
      * Name for the .desktop file (without suffix). Defaults to sanitized
@@ -57,7 +57,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<String> DESKTOP_FILENAME
             = Option.ofString("package.rpm.desktop-filename", "",
-                    MESSAGES.getString("option.desktopfilename.description"));
+                    MESSAGES.getString("option.desktopfilename.help"));
 
     /**
      * StartupWMClass to set in .desktop file.
@@ -65,7 +65,7 @@ public class RpmPackager implements Packager {
     static final Option<String> DESKTOP_WMCLASS
             = Option.ofString("package.rpm.wmclass",
                     "${package.name}",
-                    MESSAGES.getString("option.wmclass.description"));
+                    MESSAGES.getString("option.wmclass.help"));
 
     /**
      * Category (or categories) to set in .desktop file.
@@ -73,42 +73,42 @@ public class RpmPackager implements Packager {
     static final Option<String> DESKTOP_CATEGORY
             = Option.ofString("package.rpm.category",
                     "Development;Java;IDE;",
-                    MESSAGES.getString("option.category.description"));
+                    MESSAGES.getString("option.category.help"));
 
     /**
      * Maintainer name and email for the RPM spec.
      */
     static final Option<String> RPM_MAINTAINER
             = Option.ofString("package.rpm.maintainer", "",
-                    MESSAGES.getString("option.maintainer.description"));
+                    MESSAGES.getString("option.maintainer.help"));
     
     /**
      * Vendor of RPM.
      */
     static final Option<String> RPM_VENDOR
             = Option.ofString("package.rpm.vendor", "",
-                    MESSAGES.getString("option.vendor.description"));
+                    MESSAGES.getString("option.vendor.help"));
     
     /**
      * Software license.
      */
     static final Option<String> RPM_LICENSE
             = Option.ofString("package.rpm.license", "Unknown",
-                    MESSAGES.getString("option.license.description"));
+                    MESSAGES.getString("option.license.help"));
     
     /**
      * RPM group.
      */
     static final Option<String> RPM_GROUP
             = Option.ofString("package.rpm.group", "Unknown",
-                    MESSAGES.getString("option.group.description"));
+                    MESSAGES.getString("option.group.help"));
     
     /**
      * URL of the software's website.
      */
     static final Option<String> RPM_URL
             = Option.ofString("package.rpm.url", "Unknown",
-                    MESSAGES.getString("option.url.description"));
+                    MESSAGES.getString("option.url.help"));
 
     /**
      * Package summary for the RPM spec.
@@ -116,7 +116,7 @@ public class RpmPackager implements Packager {
     static final Option<String> RPM_SUMMARY
             = Option.ofString("package.rpm.summary",
                     "Package of ${package.name} ${package.version}.",
-                    MESSAGES.getString("option.summary.description"));
+                    MESSAGES.getString("option.summary.help"));
     
     /**
      * Package description for the RPM spec.
@@ -124,14 +124,14 @@ public class RpmPackager implements Packager {
     static final Option<String> RPM_DESCRIPTION
             = Option.ofString("package.rpm.description",
                     "Package of ${package.name} ${package.version}.",
-                    MESSAGES.getString("option.description.description"));
+                    MESSAGES.getString("option.description.help"));
 
     /**
      * Optional path to custom RPM spec template.
      */
     static final Option<Path> SPEC_TEMPLATE_PATH
             = Option.ofPath("package.rpm.spec-template",
-                    MESSAGES.getString("option.control_template.description"));
+                    MESSAGES.getString("option.control_template.help"));
 
     /**
      * RPM spec template.
@@ -145,7 +145,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<Path> DESKTOP_TEMPLATE_PATH
             = Option.ofPath("package.rpm.desktop-template",
-                    MESSAGES.getString("option.desktop_template.description"));
+                    MESSAGES.getString("option.desktop_template.help"));
 
     /**
      * Desktop file template.
@@ -159,7 +159,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<Path> LAUNCHER_TEMPLATE_PATH
             = Option.ofPath("package.rpm.launcher-template",
-                    MESSAGES.getString("option.launcher_template.description"));
+                    MESSAGES.getString("option.launcher_template.help"));
 
     /**
      * Launcher script template.

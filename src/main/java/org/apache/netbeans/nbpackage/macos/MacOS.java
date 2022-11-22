@@ -39,21 +39,21 @@ class MacOS {
      */
     static final Option<String> BUNDLE_ID
             = Option.ofString("package.macos.bundleid",
-                    MESSAGES.getString("option.bundle_id.description"));
+                    MESSAGES.getString("option.bundle_id.help"));
 
     /**
      * Path to icon (*.icns) file.
      */
     static final Option<Path> ICON_PATH
             = Option.ofPath("package.macos.icon",
-                    MESSAGES.getString("option.icon.description"));
+                    MESSAGES.getString("option.icon.help"));
 
     /**
      * Optional Info.plist template path.
      */
     static final Option<Path> INFO_TEMPLATE_PATH
             = Option.ofPath("package.macos.info-template",
-                    MESSAGES.getString("option.info_template.description"));
+                    MESSAGES.getString("option.info_template.help"));
 
     /**
      * Info.plist template.
@@ -67,7 +67,7 @@ class MacOS {
      */
     static final Option<Path> LAUNCHER_TEMPLATE_PATH
             = Option.ofPath("package.macos.launcher-template",
-                    MESSAGES.getString("option.launcher_template.description"));
+                    MESSAGES.getString("option.launcher_template.help"));
 
     /**
      * Launcher (main.swift) template.
@@ -94,7 +94,7 @@ class MacOS {
      */
     static final Option<Path> ENTITLEMENTS_TEMPLATE_PATH
             = Option.ofPath("package.macos.entitlements-template",
-                    MESSAGES.getString("option.entitlements_template.description"));
+                    MESSAGES.getString("option.entitlements_template.help"));
 
     /**
      * Codesign entitlements template.
@@ -108,7 +108,7 @@ class MacOS {
      */
     static final Option<String> SIGNING_FILES
             = Option.ofString("package.macos.codesign-files", DEFAULT_BIN_GLOB,
-                    MESSAGES.getString("option.codesign_files.description"));
+                    MESSAGES.getString("option.codesign_files.help"));
 
     /**
      * Search pattern for JARs containing native binaries that need to be code
@@ -116,21 +116,21 @@ class MacOS {
      */
     static final Option<String> SIGNING_JARS
             = Option.ofString("package.macos.codesign-jars", DEFAULT_JAR_BIN_GLOB,
-                    MESSAGES.getString("option.codesign_jars.description"));
+                    MESSAGES.getString("option.codesign_jars.help"));
 
     /**
      * Codesign ID for signing binaries and app bundle.
      */
     static final Option<String> CODESIGN_ID
             = Option.ofString("package.macos.codesign-id",
-                    MESSAGES.getString("option.codesign_id.description"));
+                    MESSAGES.getString("option.codesign_id.help"));
 
     /**
      * Pkgbuild ID for signing installer.
      */
     static final Option<String> PKGBUILD_ID
             = Option.ofString("package.macos.pkgbuild-id",
-                    MESSAGES.getString("option.pkgbuild_id.description"));
+                    MESSAGES.getString("option.pkgbuild_id.help"));
 
     private MacOS() {
     }
