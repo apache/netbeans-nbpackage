@@ -20,8 +20,8 @@ AutoReqProv:    no
 ${RPM_DESCRIPTION}
 
 %files
-%{_bindir}/${RPM_EXECNAME}
+%{_bindir}/${RPM_EXEC_NAME}
 %{_libdir}/%{name}/*
-%{_datadir}/applications/%{name}.desktop
+%{_datadir}/applications/${RPM_DESKTOP_NAME}
 %{_datadir}/icons/hicolor/48x48/apps/%{name}.png
 %{_datadir}/icons/hicolor/scalable/apps/%{name}.svg

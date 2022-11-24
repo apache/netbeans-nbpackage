@@ -81,7 +81,7 @@ class RpmTask extends AbstractPackagerTask {
         Path share = baseDir.resolve("share");
         Files.createDirectories(share);
         setupIcons(share, pkgName);
-        setupDesktopFile(share, "/" + base + "/bin/" + execName, pkgName);
+        Path desktopFile = setupDesktopFile(share, "/" + base + "/bin/" + execName, pkgName);
 
         Path buildRootDir = image.resolve("BUILDROOT");
         Files.createDirectories(buildRootDir);
@@ -96,7 +96,7 @@ class RpmTask extends AbstractPackagerTask {
 
         Path specsDir = image.resolve("SPECS");
         Files.createDirectories(specsDir);
-        setupSpecFile(specsDir, execName);
+        setupSpecFile(specsDir, execName, desktopFile.getFileName().toString());
 
         return image;
     }
@@ -243,7 +243,7 @@ class RpmTask extends AbstractPackagerTask {
         }
     }
 
-    private void setupDesktopFile(Path share, String exec, String pkgName) throws IOException {
+    private Path setupDesktopFile(Path share, String exec, String pkgName) throws IOException {
         String template = RpmPackager.DESKTOP_TEMPLATE.load(context());
         Map<String, String> tokens = Map.of("EXEC", exec, "ICON", pkgName);
         String desktop = StringUtils.replaceTokens(template,
@@ -262,9 +262,10 @@ class RpmTask extends AbstractPackagerTask {
                 .orElse(pkgName);
         Path desktopFile = desktopDir.resolve(desktopFileName + ".desktop");
         Files.writeString(desktopFile, desktop, StandardOpenOption.CREATE_NEW);
+        return desktopFile;
     }
 
-    private void setupSpecFile(Path specsDir, String execName) throws Exception {
+    private void setupSpecFile(Path specsDir, String execName, String desktopName) throws Exception {
         String template = RpmPackager.SPEC_TEMPLATE.load(context());
         String spec = StringUtils.replaceTokens(template, Map.ofEntries(
                 Map.entry("RPM_PACKAGE", packageName()),
@@ -293,7 +294,8 @@ class RpmTask extends AbstractPackagerTask {
                         .orElse("")),
                 Map.entry("RPM_DESCRIPTION", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
                         .orElse("")),
-                Map.entry("RPM_EXECNAME", execName)
+                Map.entry("RPM_EXEC_NAME", execName),
+                Map.entry("RPM_DESKTOP_NAME", desktopName)
         ));
 
         Path specFile = specsDir.resolve(packageName + ".spec");
