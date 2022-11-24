@@ -111,7 +111,7 @@ public class Main {
                 if (options != null && !options.isEmpty()) {
                     options.forEach((key, value) -> {
                         var opt = NBPackage.options()
-                                .filter(o -> o.key().equals(key))
+                                .filter(o -> o.key().equals(key) || o.key().equals("package." + key))
                                 .findFirst()
                                 .orElseThrow(() -> new IllegalArgumentException(key));
                         cb.set(opt, value);
