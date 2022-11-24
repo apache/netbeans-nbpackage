@@ -19,7 +19,6 @@
 package org.apache.netbeans.nbpackage.rpm;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -67,11 +66,11 @@ class RpmTask extends AbstractPackagerTask {
 
         // @TODO support other installation bases
         String base = "usr";
-        Path baseDir = image.resolve(base);   
+        Path baseDir = image.resolve(base);
 
         Path appDir = baseDir.resolve("lib").resolve(pkgName);
         Files.move(baseDir.resolve("lib").resolve("APPDIR"),
-                appDir);        
+                appDir);
 
         String execName = findLauncher(appDir.resolve("bin")).getFileName().toString();
         String packageLocation = "/" + base + "/lib/" + pkgName;
@@ -83,41 +82,47 @@ class RpmTask extends AbstractPackagerTask {
         Files.createDirectories(share);
         setupIcons(share, pkgName);
         setupDesktopFile(share, "/" + base + "/bin/" + execName, pkgName);
-        
-        Path buildRootDir = image.resolve("BUILDROOT"); 
+
+        Path buildRootDir = image.resolve("BUILDROOT");
         Files.createDirectories(buildRootDir);
-        String buildName = packageName + "-" + packageVersion + "-" + "0" + "." + packageArch;
+        String buildName = packageName() + "-" + packageVersion() + "-" + "0" + "." + packageArch();
         Path buildNameDir = buildRootDir.resolve(buildName);
         Files.createDirectories(buildNameDir);
         Path buildUsrDir = buildNameDir.resolve(base);
         Files.move(baseDir, buildUsrDir);
-        
+
         Path rpmsDir = image.resolve("RPMS");
         Files.createDirectories(rpmsDir);
-        
+
         Path specsDir = image.resolve("SPECS");
         Files.createDirectories(specsDir);
         setupSpecFile(specsDir, execName);
-        
+
         return image;
     }
 
     @Override
     public Path createPackage(Path image) throws Exception {
-        String targetName = image.getFileName().toString() + ".rpm";
-        Path target = context().destination().resolve(targetName).toAbsolutePath();
-        if (Files.exists(target)) {
-            throw new FileAlreadyExistsException(target.toString());
-        }
-        Path spec = image.resolve("SPECS").resolve(packageName + ".spec");
-        int result = context().exec(RPMBUILD, "--target", packageArch, 
-                "--define", "_topdir " + image.toAbsolutePath().toString(), 
-                "-bb", spec.toAbsolutePath().toString());
+        Path spec = image.resolve("SPECS").resolve(packageName() + ".spec");
+        int result = context().exec(RPMBUILD, "--target", packageArch(),
+                "--define", "_topdir " + image.toAbsolutePath().toString(),
+                "-bb", spec.toAbsolutePath().toString(),
+                "--noclean");
         if (result != 0) {
             throw new Exception();
-        } else {
-            return target;
         }
+        Path rpmFile;
+        try (var stream = Files.newDirectoryStream(image.resolve("RPMS").resolve(packageArch()),
+                "*.rpm")) {
+            var itr = stream.iterator();
+            if (!itr.hasNext()) {
+                throw new Exception(image.toString());
+            }
+            rpmFile = itr.next();
+        }
+        Path output = context().destination().resolve(rpmFile.getFileName());
+        Files.move(rpmFile, output);
+        return output;
     }
 
     @Override
@@ -261,37 +266,37 @@ class RpmTask extends AbstractPackagerTask {
 
     private void setupSpecFile(Path specsDir, String execName) throws Exception {
         String template = RpmPackager.SPEC_TEMPLATE.load(context());
-        String maintainer = context().getValue(RpmPackager.RPM_MAINTAINER)
-                .orElse("");
-        if (maintainer.isBlank()) {
-            context().warningHandler().accept(RpmPackager.MESSAGES.getString("message.nomaintainer"));
-        }
-        String vendor = context().getValue(RpmPackager.RPM_VENDOR).orElse(maintainer);
-        String license = context().getValue(RpmPackager.RPM_LICENSE).orElse("");
-        String group = context().getValue(RpmPackager.RPM_GROUP).orElse("");
-        String url = context().getValue(RpmPackager.RPM_URL).orElse("");
-        String summary = context().getValue(RpmPackager.RPM_SUMMARY).orElse("");
-        String description = context().getValue(RpmPackager.RPM_DESCRIPTION).orElse("");
-        String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
-                ? ""
-                : "java-devel >= 11";
-
         String spec = StringUtils.replaceTokens(template, Map.ofEntries(
                 Map.entry("RPM_PACKAGE", packageName()),
                 Map.entry("RPM_VERSION", packageVersion()),
-                Map.entry("RPM_SUMMARY", summary),
                 Map.entry("RPM_ARCH", packageArch()),
-                Map.entry("RPM_MAINTAINER", maintainer),
-                Map.entry("RPM_VENDOR", vendor),
-                Map.entry("RPM_LICENSE", license),
-                Map.entry("RPM_GROUP", group),
-                Map.entry("RPM_URL", url),
-                Map.entry("RPM_DESCRIPTION", description),
-                Map.entry("RPM_RECOMMENDS", recommends),
+                Map.entry("RPM_SUMMARY_LINE", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
+                        .map(value -> "Summary: " + value)
+                        .orElse("")),
+                Map.entry("RPM_LICENSE_LINE", context().getValue(RpmPackager.RPM_LICENSE)
+                        .map(value -> "License: " + value)
+                        .orElse("")),
+                Map.entry("RPM_GROUP_LINE", context().getValue(RpmPackager.RPM_GROUP)
+                        .map(value -> "Group: " + value)
+                        .orElse("")),
+                Map.entry("RPM_URL_LINE", context().getValue(NBPackage.PACKAGE_URL)
+                        .map(value -> "URL: " + value)
+                        .orElse("")),
+                Map.entry("RPM_VENDOR_LINE", context().getValue(NBPackage.PACKAGE_PUBLISHER)
+                        .map(value -> "Vendor: " + value)
+                        .orElse("")),
+                Map.entry("RPM_MAINTAINER_LINE", context().getValue(RpmPackager.RPM_MAINTAINER)
+                        .map(value -> "Packager: " + value)
+                        .orElse("")),
+                Map.entry("RPM_RECOMMENDS_LINE", context().getValue(NBPackage.PACKAGE_RUNTIME)
+                        .map(value -> "Recommends: java-devel >= 11")
+                        .orElse("")),
+                Map.entry("RPM_DESCRIPTION", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
+                        .orElse("")),
                 Map.entry("RPM_EXECNAME", execName)
         ));
-       
+
         Path specFile = specsDir.resolve(packageName + ".spec");
         Files.writeString(specFile, spec, StandardOpenOption.CREATE_NEW);
-    }    
+    }
 }

@@ -40,7 +40,7 @@ public class RpmPackager implements Packager {
      * Defaults to Apache NetBeans icon.
      */
     static final Option<Path> ICON_PATH
-            = Option.ofPath("package.rpm.icon", "",
+            = Option.ofPath("package.rpm.icon",
                     MESSAGES.getString("option.icon.help"));
 
     /**
@@ -48,7 +48,7 @@ public class RpmPackager implements Packager {
      * Apache NetBeans icon.
      */
     static final Option<Path> SVG_ICON_PATH
-            = Option.ofPath("package.rpm.svg-icon", "",
+            = Option.ofPath("package.rpm.svg-icon",
                     MESSAGES.getString("option.svg.help"));
 
     /**
@@ -56,7 +56,7 @@ public class RpmPackager implements Packager {
      * version of package name.
      */
     static final Option<String> DESKTOP_FILENAME
-            = Option.ofString("package.rpm.desktop-filename", "",
+            = Option.ofString("package.rpm.desktop-filename",
                     MESSAGES.getString("option.desktopfilename.help"));
 
     /**
@@ -64,7 +64,7 @@ public class RpmPackager implements Packager {
      */
     static final Option<String> DESKTOP_WMCLASS
             = Option.ofString("package.rpm.wmclass",
-                    "${package.name}",
+                    MESSAGES.getString("option.wmclass.default"),
                     MESSAGES.getString("option.wmclass.help"));
 
     /**
@@ -72,60 +72,32 @@ public class RpmPackager implements Packager {
      */
     static final Option<String> DESKTOP_CATEGORY
             = Option.ofString("package.rpm.category",
-                    "Development;Java;IDE;",
+                    MESSAGES.getString("option.category.default"),
                     MESSAGES.getString("option.category.help"));
 
     /**
      * Maintainer name and email for the RPM spec.
      */
     static final Option<String> RPM_MAINTAINER
-            = Option.ofString("package.rpm.maintainer", "",
+            = Option.ofString("package.rpm.maintainer",
                     MESSAGES.getString("option.maintainer.help"));
-    
-    /**
-     * Vendor of RPM.
-     */
-    static final Option<String> RPM_VENDOR
-            = Option.ofString("package.rpm.vendor", "",
-                    MESSAGES.getString("option.vendor.help"));
     
     /**
      * Software license.
      */
     static final Option<String> RPM_LICENSE
-            = Option.ofString("package.rpm.license", "Unknown",
+            = Option.ofString("package.rpm.license",
+                    MESSAGES.getString("option.license.default"),
                     MESSAGES.getString("option.license.help"));
     
     /**
      * RPM group.
      */
     static final Option<String> RPM_GROUP
-            = Option.ofString("package.rpm.group", "Unknown",
+            = Option.ofString("package.rpm.group",
+                    MESSAGES.getString("option.group.default"),
                     MESSAGES.getString("option.group.help"));
     
-    /**
-     * URL of the software's website.
-     */
-    static final Option<String> RPM_URL
-            = Option.ofString("package.rpm.url", "Unknown",
-                    MESSAGES.getString("option.url.help"));
-
-    /**
-     * Package summary for the RPM spec.
-     */
-    static final Option<String> RPM_SUMMARY
-            = Option.ofString("package.rpm.summary",
-                    "Package of ${package.name} ${package.version}.",
-                    MESSAGES.getString("option.summary.help"));
-    
-    /**
-     * Package description for the RPM spec.
-     */
-    static final Option<String> RPM_DESCRIPTION
-            = Option.ofString("package.rpm.description",
-                    "Package of ${package.name} ${package.version}.",
-                    MESSAGES.getString("option.description.help"));
-
     /**
      * Optional path to custom RPM spec template.
      */
@@ -170,8 +142,7 @@ public class RpmPackager implements Packager {
 
     private static final List<Option<?>> RPM_OPTIONS
             = List.of(ICON_PATH, SVG_ICON_PATH, DESKTOP_FILENAME, DESKTOP_WMCLASS,
-                    DESKTOP_CATEGORY, RPM_MAINTAINER, RPM_VENDOR, 
-                    RPM_LICENSE, RPM_GROUP, RPM_URL, RPM_DESCRIPTION,
+                    DESKTOP_CATEGORY, RPM_MAINTAINER, RPM_LICENSE, RPM_GROUP,
                     SPEC_TEMPLATE_PATH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
 
     private static final List<Template> RPM_TEMPLATES

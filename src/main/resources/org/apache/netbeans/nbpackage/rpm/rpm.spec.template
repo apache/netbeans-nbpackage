@@ -1,14 +1,19 @@
-Name:           ${RPM_PACKAGE}
-Version:        ${RPM_VERSION}
-Release:        0
-Summary:        ${RPM_SUMMARY}
-License:        ${RPM_LICENSE}
-Group:          ${RPM_GROUP}
-URL:            ${RPM_URL}
-BuildArch:      ${RPM_ARCH}
-Packager:       ${RPM_MAINTAINER}
-Vendor:         ${RPM_VENDOR}
-Recommends:     ${RPM_RECOMMENDS}
+%define _binaries_in_noarch_packages_terminate_build 0
+%define _unpackaged_files_terminate_build 0
+
+Name: ${RPM_PACKAGE}
+Version: ${RPM_VERSION}
+Release: 0
+BuildArch: ${RPM_ARCH}
+
+${RPM_SUMMARY_LINE}
+${RPM_LICENSE_LINE}
+${RPM_GROUP_LINE}
+${RPM_URL_LINE}
+${RPM_VENDOR_LINE}
+${RPM_MAINTAINER_LINE}
+${RPM_RECOMMENDS_LINE}
+
 AutoReqProv:    no
 
 %description
