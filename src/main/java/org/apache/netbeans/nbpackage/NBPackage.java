@@ -20,6 +20,7 @@ package org.apache.netbeans.nbpackage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -48,7 +49,7 @@ public final class NBPackage {
      * Option definition for package name.
      */
     public static final Option<String> PACKAGE_NAME = Option.ofString(
-            "package.name", "", MESSAGES.getString("option.name.help"));
+            "package.name", MESSAGES.getString("option.name.help"));
 
     /**
      * Option definition for package version.
@@ -60,14 +61,45 @@ public final class NBPackage {
      * Option definition for package type.
      */
     public static final Option<String> PACKAGE_TYPE = Option.ofString(
-            "package.type", "", MESSAGES.getString("option.type.help"));
+            "package.type", MESSAGES.getString("option.type.help"));
 
     /**
      * Option definition for path to the optional Java runtime to include in the
      * package.
      */
     public static final Option<Path> PACKAGE_RUNTIME = Option.ofPath(
-            "package.runtime", "", MESSAGES.getString("option.runtime.help"));
+            "package.runtime", MESSAGES.getString("option.runtime.help"));
+
+    /**
+     * Option definition for package publisher.
+     */
+    public static final Option<String> PACKAGE_PUBLISHER = Option.ofString(
+            "package.publisher",
+            MESSAGES.getString("option.publisher.default"),
+            MESSAGES.getString("option.publisher.help"));
+
+    /**
+     * Option definition for package URL.
+     */
+    public static final Option<URI> PACKAGE_URL = Option.of("package.url",
+            URI.class,
+            "",
+            s -> {
+                var uri = new URI(s);
+                if (uri.isAbsolute()) {
+                    return uri;
+                }
+                throw new IllegalArgumentException();
+            },
+            MESSAGES.getString("option.url.help"));
+
+    /**
+     * Option definition for summary description.
+     */
+    public static final Option<String> PACKAGE_DESCRIPTION = Option.ofString(
+            "package.description",
+            MESSAGES.getString("option.description.default"),
+            MESSAGES.getString("option.description.help"));
 
 // @TODO generate list from service loader if modularizing
     private static final List<Packager> PACKAGERS = List.of(
@@ -80,7 +112,8 @@ public final class NBPackage {
     );
 
     private static final List<Option<?>> GLOBAL_OPTIONS
-            = List.of(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE, PACKAGE_RUNTIME);
+            = List.of(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE, PACKAGE_RUNTIME,
+                    PACKAGE_DESCRIPTION, PACKAGE_PUBLISHER, PACKAGE_URL);
 
     private NBPackage() {
         // no op
