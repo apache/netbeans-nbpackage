@@ -40,7 +40,7 @@ public class DebPackager implements Packager {
      * Defaults to Apache NetBeans icon.
      */
     static final Option<Path> ICON_PATH
-            = Option.ofPath("package.deb.icon", "",
+            = Option.ofPath("package.deb.icon",
                     MESSAGES.getString("option.icon.help"));
 
     /**
@@ -48,7 +48,7 @@ public class DebPackager implements Packager {
      * Apache NetBeans icon.
      */
     static final Option<Path> SVG_ICON_PATH
-            = Option.ofPath("package.deb.svg-icon", "",
+            = Option.ofPath("package.deb.svg-icon",
                     MESSAGES.getString("option.svg.help"));
 
     /**
@@ -56,7 +56,7 @@ public class DebPackager implements Packager {
      * version of package name.
      */
     static final Option<String> DESKTOP_FILENAME
-            = Option.ofString("package.deb.desktop-filename", "",
+            = Option.ofString("package.deb.desktop-filename",
                     MESSAGES.getString("option.desktopfilename.help"));
 
     /**
@@ -64,7 +64,7 @@ public class DebPackager implements Packager {
      */
     static final Option<String> DESKTOP_WMCLASS
             = Option.ofString("package.deb.wmclass",
-                    "${package.name}",
+                    MESSAGES.getString("option.wmclass.default"),
                     MESSAGES.getString("option.wmclass.help"));
 
     /**
@@ -72,7 +72,7 @@ public class DebPackager implements Packager {
      */
     static final Option<String> DESKTOP_CATEGORY
             = Option.ofString("package.deb.category",
-                    "Development;Java;IDE;",
+                    MESSAGES.getString("option.category.default"),
                     MESSAGES.getString("option.category.help"));
 
     /**
@@ -81,14 +81,6 @@ public class DebPackager implements Packager {
     static final Option<String> DEB_MAINTAINER
             = Option.ofString("package.deb.maintainer", "",
                     MESSAGES.getString("option.maintainer.help"));
-
-    /**
-     * Package description for Debian Control file.
-     */
-    static final Option<String> DEB_DESCRIPTION
-            = Option.ofString("package.deb.description",
-                    "Package of ${package.name} ${package.version}.",
-                    MESSAGES.getString("option.description.help"));
 
     /**
      * Optional path to custom DEB control template.
@@ -134,8 +126,8 @@ public class DebPackager implements Packager {
 
     private static final List<Option<?>> DEB_OPTIONS
             = List.of(ICON_PATH, SVG_ICON_PATH, DESKTOP_FILENAME, DESKTOP_WMCLASS,
-                    DESKTOP_CATEGORY, DEB_MAINTAINER, DEB_DESCRIPTION,
-                    CONTROL_TEMPLATE_PATH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
+                    DESKTOP_CATEGORY, DEB_MAINTAINER, CONTROL_TEMPLATE_PATH,
+                    DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
 
     private static final List<Template> DEB_TEMPLATES
             = List.of(CONTROL_TEMPLATE, DESKTOP_TEMPLATE, LAUNCHER_TEMPLATE);

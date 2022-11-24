@@ -255,7 +255,7 @@ class DebTask extends AbstractPackagerTask {
         if (maintainer.isBlank()) {
             context().warningHandler().accept(DebPackager.MESSAGES.getString("message.nomaintainer"));
         }
-        String description = context().getValue(DebPackager.DEB_DESCRIPTION).orElse("");
+        String description = context().getValue(NBPackage.PACKAGE_DESCRIPTION).orElse("");
         String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
                 ? ""
                 : "java11-sdk";
