@@ -173,7 +173,7 @@ class RpmTask extends AbstractPackagerTask {
         if (packageArch == null) {
             if (context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()) {
                 packageArch = context()
-                        .execAndGetOutput(RPM, "--eval '%{_arch}'")
+                        .execAndGetOutput(RPM, "--eval", "%{_arch}")
                         .strip();
             } else {
                 packageArch = "noarch";
