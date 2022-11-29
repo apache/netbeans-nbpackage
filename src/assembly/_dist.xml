@@ -30,7 +30,6 @@ under the License.
       <includes>
         <include>README*</include>
         <include>LICENSE*</include>
-        <include>NOTICE*</include>
       </includes>
     </fileSet>
   </fileSets>
@@ -45,6 +44,10 @@ under the License.
       <source>src/assembly/bin/nbpackage.cmd</source>
       <outputDirectory>bin</outputDirectory>
       <lineEnding>dos</lineEnding>
+    </file>
+    <file>
+      <source>src/assembly/bin/BINARY_NOTICE</source>
+      <destName>NOTICE</destName>
     </file>
   </files>
 </component>

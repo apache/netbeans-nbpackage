@@ -28,7 +28,7 @@ under the License.
   
   <groupId>org.apache.netbeans</groupId>
   <artifactId>nbpackage</artifactId>
-  <version>1.0-beta1-SNAPSHOT</version>
+  <version>1.0-beta1</version>
   <packaging>jar</packaging>
   
   <name>Apache NetBeans NBPackage</name>
@@ -113,6 +113,7 @@ under the License.
             <exclude>nb-configuration.xml</exclude>
             <!-- misc excludes -->
             <exclude>README.md</exclude>
+            <exclude>src/assembly/bin/BINARY_NOTICE</exclude>
           </excludes>
         </configuration>
         <executions>
@@ -172,7 +173,7 @@ under the License.
       </plugin>
     </plugins>
   </build>
-    
+ 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>

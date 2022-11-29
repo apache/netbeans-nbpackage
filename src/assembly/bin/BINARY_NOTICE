@@ -12,3 +12,17 @@ Parts of this software are derived from the libgdx Packr project, under Apache L
 
 Launch scripts are derived from templates in the AppAssembler plugin, under MIT license.
   Copyright 2006-2012 The Codehaus.
+
+**********************
+THIRD PARTY COMPONENTS
+**********************
+
+This software includes third party software subject to the following copyrights:
+
+Apache Commons Compress
+Copyright 2002-2021 The Apache Software Foundation
+Licensed under the Apache License 2.0
+
+Picocli
+Copyright 2017 Remko Popma
+Licensed under the Apache License 2.0
