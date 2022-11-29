@@ -290,8 +290,8 @@ class RpmTask extends AbstractPackagerTask {
                         .map(value -> "Packager: " + value)
                         .orElse("")),
                 Map.entry("RPM_RECOMMENDS_LINE", context().getValue(NBPackage.PACKAGE_RUNTIME)
-                        .map(value -> "Recommends: java-devel >= 11")
-                        .orElse("")),
+                        .map(value -> "")
+                        .orElse("Recommends: java-devel >= 11")),
                 Map.entry("RPM_DESCRIPTION", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
                         .orElse("")),
                 Map.entry("RPM_EXEC_NAME", execName),
