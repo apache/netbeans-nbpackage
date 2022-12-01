@@ -40,7 +40,12 @@ under the License.
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/netbeans-nbpackage.git</developerConnection>
     <url>https://github.com/apache/netbeans-nbpackage</url>
   </scm>
-  
+  <distributionManagement>
+        <site>
+            <id>netbeans.bits</id>
+            <url>https://bits.netbeans.org/nbpackage</url>
+        </site>
+  </distributionManagement>  
   <dependencies>
     <dependency>
       <groupId>info.picocli</groupId>
