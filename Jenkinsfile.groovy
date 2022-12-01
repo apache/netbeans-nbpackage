@@ -17,4 +17,4 @@
  * under the License.
  */
 
-asfStandardUtilitiesBuild()
+asfStandardUtilitiesBuild jdk:'jdk_11_latest'
