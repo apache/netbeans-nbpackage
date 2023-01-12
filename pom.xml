@@ -157,7 +157,6 @@ under the License.
               <descriptors>
                 <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
               </descriptors>
-              <attach>false</attach>
             </configuration>
           </execution>
           <execution>
