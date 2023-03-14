@@ -19,14 +19,15 @@ github:
   homepage: https://netbeans.apache.org/
   labels:
     - netbeans
+    - netbeans-platform
   features:
-    wiki: false
-    issues: false
-    projects: false
+    wiki: true
+    issues: true
+    projects: true
   enabled_merge_buttons:
-    squash:  true
+    squash:  false
     merge:   true
-    rebase:  true
+    rebase:  false
 notifications:
     commits:      commits@netbeans.apache.org
     issues:       notifications@netbeans.apache.org
