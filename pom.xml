@@ -41,10 +41,10 @@ under the License.
     <url>https://github.com/apache/netbeans-nbpackage</url>
   </scm>
   <distributionManagement>
-        <site>
-            <id>netbeans.bits</id>
-            <url>https://bits.netbeans.org/nbpackage</url>
-        </site>
+    <site>
+      <id>netbeans.bits</id>
+      <url>https://bits.netbeans.org/nbpackage</url>
+    </site>
   </distributionManagement>  
   <dependencies>
     <dependency>
@@ -130,6 +130,41 @@ under the License.
         </executions>
       </plugin>
       <plugin>
+        <!-- skip to ensure use of NOTICE and LICENSE from repository -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- add NOTICE and LICENSE from repository to apidoc -
+          see also resources configuration below for source and binary jar -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>licensenoticecopy</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/apidocs/META-INF</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}</directory>
+                  <includes>
+                    <include>NOTICE</include>
+                    <include>LICENSE</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.4.2</version>
@@ -176,6 +211,20 @@ under the License.
         </executions>
       </plugin>
     </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- include NOTICE and LICENSE from repository inside META-INF -->
+      <resource>
+        <directory>${basedir}</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>NOTICE</include>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
  
   <properties>
