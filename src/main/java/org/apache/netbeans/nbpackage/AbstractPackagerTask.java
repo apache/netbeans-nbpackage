@@ -286,6 +286,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         }
         var image = images.get(0);
         FileUtils.moveFiles(image, destDir);
+        FileUtils.deleteFiles(tmp);
     }
 
     private void copyAppFromDirectory(Path input, Path destDir) throws IOException {
@@ -310,6 +311,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         }
         var java = runtimes.get(0);
         FileUtils.moveFiles(java, destDir);
+        FileUtils.deleteFiles(tmp);
     }
 
     private void copyRuntimeFromDirectory(Path runtime, Path destDir) throws IOException {
