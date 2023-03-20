@@ -40,7 +40,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
                 .orElseThrow(() -> new IllegalStateException(
                 AppImagePackager.MESSAGES.getString("message.noappimagetool")));
@@ -51,8 +51,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        var image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         Path usrLib = image.resolve("usr").resolve("lib");
         String execName = findLauncher(
                 usrLib.resolve("APPDIR").resolve("bin"))
@@ -70,12 +69,10 @@ class AppImageTask extends AbstractPackagerTask {
         setupDesktopFile(image, execName);
         setupAppRunScript(image, execName);
 
-        return image;
-
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
                 .orElseThrow(() -> new IllegalStateException(
                 AppImagePackager.MESSAGES.getString("message.noappimagetool")))

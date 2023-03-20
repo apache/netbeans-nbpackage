@@ -34,13 +34,13 @@ class PkgTask extends AppBundleTask {
     }
     
     @Override
-    public void validateCreatePackage() throws Exception {
-        super.validateCreatePackage();
+    protected void checkPackageRequirements() throws Exception {
+        super.checkPackageRequirements();
         validateTools("pkgbuild");
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         Path bundle = super.createPackage(image);
         String name = context().getValue(NBPackage.PACKAGE_NAME).orElseThrow();
         String version = context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow();

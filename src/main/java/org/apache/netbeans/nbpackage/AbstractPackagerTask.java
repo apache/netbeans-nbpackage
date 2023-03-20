@@ -36,74 +36,149 @@ public abstract class AbstractPackagerTask implements Packager.Task {
 
     /**
      * Create task with provided context.
-     * 
+     *
      * @param context execution context
      */
     protected AbstractPackagerTask(ExecutionContext context) {
         this.context = Objects.requireNonNull(context);
     }
 
+    /**
+     * Implementation of {@link Packager.Task#validateCreateImage()}. Calls
+     * through to the optional {@link #checkImageRequirements()} hook for task
+     * implementations to validate any requirements for building the image.
+     *
+     * @throws Exception if image creation requirements are not met
+     */
     @Override
-    public void validateCreateImage() throws Exception {
-        // no op
+    public final void validateCreateImage() throws Exception {
+        checkImageRequirements();
     }
 
     /**
-     * Default implementation of
-     * {@link Packager.Task#createImage(java.nio.file.Path)}. Creates an image
-     * directory, and extracts the application and (optional) runtime into it.
-     * Name and paths can be customized if required by overriding the
-     * implementations of
+     * Implementation of {@link Packager.Task#validateCreatePackage() ()}. Calls
+     * through to the optional {@link #checkPackageRequirements()} hook for task
+     * implementations to validate any requirements for building the final
+     * package.
+     *
+     * @throws Exception if package creation requirements are not met
+     */
+    @Override
+    public final void validateCreatePackage() throws Exception {
+        checkPackageRequirements();
+    }
+
+    /**
+     * Implementation of {@link Packager.Task#createImage(java.nio.file.Path)}.
+     * Creates an image directory, and extracts the application and (optional)
+     * runtime into it. Name and paths can be customized if required by
+     * overriding the implementations of
      * {@link #imageName(java.nio.file.Path)}, {@link #applicationDirectory(java.nio.file.Path)}
      * and {@link #runtimeDirectory(java.nio.file.Path, java.nio.file.Path)}. If
      * the runtime is extracted inside the application path, the *.conf file
      * will be updated with the relative path to the runtime (currently only for
      * RCP applications).
+     * <p>
+     * After the base image is created,
+     * {@link #customizeImage(java.nio.file.Path)} will be called, allowing the
+     * task implementation to alter and extend the base image (eg. adding
+     * scripts, icons, build files etc.).
+     * <p>
+     * Following customization, any filtering tasks such as merging or deleting
+     * files will be run. Following filtering, the optional
+     * {@link #finalizeImage(java.nio.file.Path)} hook is called, allowing the
+     * task implementation to perform any additional steps that require the
+     * final image state (eg. file lists).
      *
      * @param input file or directory
      * @return path to image
      * @throws Exception if unable to create image
      */
     @Override
-    public Path createImage(Path input) throws Exception {
-        String imageName = imageName(input);
-        Path image = context.destination().resolve(imageName);
-        Files.createDirectory(image);
-
-        Path appDir = applicationDirectory(image);
-        Files.createDirectories(appDir);
-        if (Files.isDirectory(input)) {
-            copyAppFromDirectory(input, appDir);
-        } else if (Files.isRegularFile(input)) {
-            extractAppFromArchive(input, appDir);
-        } else {
-            throw new IllegalArgumentException(input.toString());
-        }
-
-        Path runtime = context.getValue(NBPackage.PACKAGE_RUNTIME)
-                .map(Path::toAbsolutePath)
-                .orElse(null);
-        if (runtime != null) {
-            Path runtimeDir = runtimeDirectory(image, appDir);
-            Files.createDirectories(runtimeDir);
-            if (Files.isDirectory(runtime)) {
-                copyRuntimeFromDirectory(runtime, runtimeDir);
-            } else if (Files.isRegularFile(runtime)) {
-                extractRuntimeFromArchive(runtime, runtimeDir);
-            } else {
-                throw new IllegalArgumentException(runtime.toString());
-            }
-            if (runtimeDir.startsWith(appDir)) {
-                String jdkhome = appDir.relativize(runtimeDir).toString();
-                try (var confs = Files.newDirectoryStream(appDir.resolve("etc"), "*.conf")) {
-                    for (Path conf : confs) {
-                        addRuntimeToConf(conf, jdkhome);
-                    }
-                }
-            }
-        }
+    public final Path createImage(Path input) throws Exception {
+        Path image = createBaseImage(input);
+        customizeImage(image);
+        filterImage(image);
+        finalizeImage(image);
         return image;
     }
+
+    /**
+     * Implementation of
+     * {@link Packager.Task#createPackage(java.nio.file.Path)}. Calls through to
+     * {@link #buildPackage(java.nio.file.Path)}.
+     *
+     * @param image path to image directory
+     * @return path to created package
+     * @throws Exception if package creation fails
+     */
+    @Override
+    public final Path createPackage(Path image) throws Exception {
+        return buildPackage(image);
+    }
+
+    /**
+     * Optional hook called during {@link #validateCreateImage()} for tasks to
+     * check image building requirements. Tasks that require specific
+     * configurations or tools in order to build an image should check them here
+     * and throw an exception if requirements are not met.
+     *
+     * @throws Exception if image requirements are not met
+     */
+    protected void checkImageRequirements() throws Exception {
+        // no op hook
+    }
+
+    /**
+     * Optional hook called during {@link #validateCreatePackage() ()} for tasks
+     * to check package building requirements. Tasks that require specific
+     * configurations or tools in order to build a package should check them
+     * here and throw an exception if requirements are not met.
+     *
+     * @throws Exception if image requirements are not met
+     */
+    protected void checkPackageRequirements() throws Exception {
+        // no op hook
+    }
+
+    /**
+     * Customize the base image. Called during
+     * {@link #createImage(java.nio.file.Path)} after the application has been
+     * extracted, along with the optional runtime, into the image directory. The
+     * task implementation should add additional required files, such as
+     * scripts, icons and builds files at this stage.
+     * <p>
+     * This method is called prior to filtering of the image. Any step that
+     * requires the final image layout or list of files should be done in the
+     * optional {@link #finalizeImage(java.nio.file.Path)} hook.
+     *
+     * @param image base image directory
+     * @throws Exception if image customization fails
+     */
+    protected abstract void customizeImage(Path image) throws Exception;
+
+    /**
+     * Optional hook called during {@link #createImage(java.nio.file.Path)}
+     * after the image has been filtered. Any step that requires the final image
+     * layout, such as creating a build file with a complete file list, should
+     * be done at this stage.
+     *
+     * @param image filtered image directory
+     * @throws Exception if image finalization fails
+     */
+    protected void finalizeImage(Path image) throws Exception {
+        // no op hook
+    }
+
+    /**
+     * Build the package from the provided image. Called during
+     * {@link #createPackage(java.nio.file.Path)}.
+     *
+     * @param image path to image directory
+     * @return path to created package
+     * @throws Exception if package build fails
+     */
+    protected abstract Path buildPackage(Path image) throws Exception;
 
     /**
      * Access the ExecutionContext.
@@ -156,6 +231,50 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      */
     protected Path runtimeDirectory(Path image, Path application) throws Exception {
         return application.resolve("jdk");
+    }
+
+    private Path createBaseImage(Path input) throws Exception {
+        String imageName = imageName(input);
+        Path image = context.destination().resolve(imageName);
+        Files.createDirectory(image);
+
+        Path appDir = applicationDirectory(image);
+        Files.createDirectories(appDir);
+        if (Files.isDirectory(input)) {
+            copyAppFromDirectory(input, appDir);
+        } else if (Files.isRegularFile(input)) {
+            extractAppFromArchive(input, appDir);
+        } else {
+            throw new IllegalArgumentException(input.toString());
+        }
+
+        Path runtime = context.getValue(NBPackage.PACKAGE_RUNTIME)
+                .map(Path::toAbsolutePath)
+                .orElse(null);
+        if (runtime != null) {
+            Path runtimeDir = runtimeDirectory(image, appDir);
+            Files.createDirectories(runtimeDir);
+            if (Files.isDirectory(runtime)) {
+                copyRuntimeFromDirectory(runtime, runtimeDir);
+            } else if (Files.isRegularFile(runtime)) {
+                extractRuntimeFromArchive(runtime, runtimeDir);
+            } else {
+                throw new IllegalArgumentException(runtime.toString());
+            }
+            if (runtimeDir.startsWith(appDir)) {
+                String jdkhome = appDir.relativize(runtimeDir).toString();
+                try (var confs = Files.newDirectoryStream(appDir.resolve("etc"), "*.conf")) {
+                    for (Path conf : confs) {
+                        addRuntimeToConf(conf, jdkhome);
+                    }
+                }
+            }
+        }
+        return image;
+    }
+
+    private void filterImage(Path image) throws Exception {
+        // no op placeholder for merge / delete support
     }
 
     private void extractAppFromArchive(Path input, Path destDir) throws IOException {

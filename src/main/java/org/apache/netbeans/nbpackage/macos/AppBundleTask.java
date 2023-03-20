@@ -52,7 +52,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
     
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         String[] cmds;
         if (context().getValue(MacOS.CODESIGN_ID).isEmpty()) {
             cmds = new String[] {"swift"};
@@ -63,8 +63,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
     
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         Path bundle = image.resolve(getBundleName() + ".app");
         Path contents = bundle.resolve("Contents");
         Path resources = contents.resolve("Resources");
@@ -79,12 +78,10 @@ class AppBundleTask extends AbstractPackagerTask {
         setupLauncherSource(image);
         setupSigningConfiguration(image, bundle);
         
-        return image;
-        
     }
     
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         Path bundle = image.resolve(getBundleName() + ".app");
         
         String execName = FileUtils.find(bundle, "Contents/Resources/*/bin/*")

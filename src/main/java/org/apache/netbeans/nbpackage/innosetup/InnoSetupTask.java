@@ -42,15 +42,14 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")));
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         String execName = findExecName(image.resolve("APPDIR").resolve("bin"));
 
         Path appDir = image.resolve(execName);
@@ -59,12 +58,10 @@ class InnoSetupTask extends AbstractPackagerTask {
         setupIcons(image, execName);
         setupLicenseFile(image);
         createInnoSetupScript(image, execName);
-
-        return image;
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         Path tool = context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")))

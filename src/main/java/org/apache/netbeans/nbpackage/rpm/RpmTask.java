@@ -47,21 +47,19 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreateImage() throws Exception {
-        super.validateCreateImage();
+    protected void checkImageRequirements() throws Exception {
         if (context().isImageOnly()) {
             validateTools(RPM);
         }
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         validateTools(RPM, RPMBUILD);
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         String pkgName = packageName();
 
         // @TODO support other installation bases
@@ -98,11 +96,10 @@ class RpmTask extends AbstractPackagerTask {
         Files.createDirectories(specsDir);
         setupSpecFile(specsDir, execName, desktopFile.getFileName().toString());
 
-        return image;
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         Path spec = image.resolve("SPECS").resolve(packageName() + ".spec");
         int result = context().exec(RPMBUILD, "--target", packageArch(),
                 "--define", "_topdir " + image.toAbsolutePath().toString(),
