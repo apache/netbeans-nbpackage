@@ -74,8 +74,8 @@ class PkgTask extends AppBundleTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
-        return super.imageName(input) + "-pkg";
+    protected String calculateImageName(Path input) throws Exception {
+        return super.calculateImageName(input) + "-pkg";
     }
 
 }

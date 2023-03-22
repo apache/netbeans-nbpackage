@@ -95,17 +95,17 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
-        return super.imageName(input) + "-InnoSetup";
+    protected String calculateImageName(Path input) throws Exception {
+        return super.calculateImageName(input) + "-InnoSetup";
     }
 
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve("APPDIR");
     }
 
     @Override
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         return application.resolve("jdk");
     }
 

@@ -123,12 +123,12 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
+    protected String calculateImageName(Path input) throws Exception {
         return packageName() + "-" + packageVersion() + "." + packageArch();
     }
 
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve("usr").resolve("lib").resolve("APPDIR");
     }
 

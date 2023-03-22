@@ -109,12 +109,12 @@ class AppBundleTask extends AbstractPackagerTask {
     }
     
     @Override
-    protected String imageName(Path input) throws Exception {
-        return super.imageName(input) + "-macOS-app";
+    protected String calculateImageName(Path input) throws Exception {
+        return super.calculateImageName(input) + "-macOS-app";
     }
     
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve(getBundleName() + ".app")
                 .resolve("Contents")
                 .resolve("Resources")
@@ -122,7 +122,7 @@ class AppBundleTask extends AbstractPackagerTask {
     }
     
     @Override
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         return image.resolve(getBundleName() + ".app")
                 .resolve("Contents")
                 .resolve("Home");

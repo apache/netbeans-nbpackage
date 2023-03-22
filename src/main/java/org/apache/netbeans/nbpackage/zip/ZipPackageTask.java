@@ -43,11 +43,11 @@ class ZipPackageTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         if (Files.exists(application.resolve("bin").resolve("netbeans"))) {
             context().warningHandler().accept(ZipPackager.MESSAGES.getString("zip.nbruntime.warning"));
         }
-        return super.runtimeDirectory(image, application);
+        return super.calculateRuntimePath(image, application);
     }
 
 }

@@ -75,8 +75,9 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      * Creates an image directory, and extracts the application and (optional)
      * runtime into it. Name and paths can be customized if required by
      * overriding the implementations of
-     * {@link #imageName(java.nio.file.Path)}, {@link #applicationDirectory(java.nio.file.Path)}
-     * and {@link #runtimeDirectory(java.nio.file.Path, java.nio.file.Path)}. If
+     * {@link #calculateImageName(java.nio.file.Path)}, {@link #calculateAppPath(java.nio.file.Path)}
+     * and
+     * {@link #calculateRuntimePath(java.nio.file.Path, java.nio.file.Path)}. If
      * the runtime is extracted inside the application path, the *.conf file
      * will be updated with the relative path to the runtime (currently only for
      * RCP applications).
@@ -98,11 +99,11 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      */
     @Override
     public final Path createImage(Path input) throws Exception {
-        String imageName = imageName(input);
+        String imageName = calculateImageName(input);
         Path image = context.destination().resolve(imageName);
         Files.createDirectory(image);
 
-        Path appDir = applicationDirectory(image);
+        Path appDir = calculateAppPath(image);
         Files.createDirectories(appDir);
         if (Files.isDirectory(input)) {
             copyAppFromDirectory(input, appDir);
@@ -116,7 +117,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
                 .map(Path::toAbsolutePath)
                 .orElse(null);
         if (runtime != null) {
-            Path runtimeDir = runtimeDirectory(image, appDir);
+            Path runtimeDir = calculateRuntimePath(image, appDir);
             Files.createDirectories(runtimeDir);
             if (Files.isDirectory(runtime)) {
                 copyRuntimeFromDirectory(runtime, runtimeDir);
@@ -248,36 +249,36 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     }
 
     /**
-     * The name for the image directory. The default implementation returns a
-     * sanitized version of the package name and version. Subclasses may
-     * override if they need to change the name.
+     * Hook to calculate the name for the image directory. The default
+     * implementation returns a sanitized version of the package name and
+     * version. Subclasses may override if they need to change the name.
      *
      * @param input the application input file (if required)
      * @return image directory name
      * @throws Exception on configuration errors
      */
-    protected String imageName(Path input) throws Exception {
+    protected String calculateImageName(Path input) throws Exception {
         String appName = context.getValue(NBPackage.PACKAGE_NAME).orElseThrow();
         String appVersion = context.getValue(NBPackage.PACKAGE_VERSION).orElseThrow();
         return sanitize(appName) + "-" + sanitize(appVersion);
     }
 
     /**
-     * The fully resolved path inside the image in which the application will be
-     * extracted. By default this is the image directory itself. Subclasses may
-     * override to place the application in an alternative path inside the
+     * Hook to calculate the path inside the image in which the application will
+     * be extracted. By default this is the image directory itself. Subclasses
+     * may override to place the application in an alternative path inside the
      * image.
      *
      * @param image image directory
      * @return resolved application path inside image
      * @throws Exception if unable to compute path
      */
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image;
     }
 
     /**
-     * The fully resolved path inside the image in which the runtime will be
+     * Hook to calculate the path inside the image in which the runtime will be
      * extracted. The default implementation returns
      * <code>application.resolve("jdk")</code>. Subclasses may override to
      * extract the runtime into an alternative path inside the image.
@@ -287,7 +288,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      * @return resolved runtime path inside image
      * @throws Exception if unable to compute path
      */
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         return application.resolve("jdk");
     }
 

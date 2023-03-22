@@ -195,7 +195,7 @@ public class AbstractPackagerTaskTest {
             }
 
             @Override
-            protected Path applicationDirectory(Path image) throws Exception {
+            protected Path calculateAppPath(Path image) throws Exception {
                 return image.resolve("BUILD").resolve("usr").resolve("lib").resolve("app");
             }
 
