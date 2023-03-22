@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
+import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
 import org.apache.netbeans.nbpackage.StringUtils;
 
@@ -59,7 +60,7 @@ class InnoSetupTask extends AbstractPackagerTask {
 
     @Override
     protected void finalizeImage(Path image) throws Exception {
-        String execName = findExecName(image.resolve("APPDIR").resolve("bin"));
+        String execName = findExecName(FileUtils.find(image, "*/bin").get(0));
         createInnoSetupScript(image, execName);
     }
 
@@ -110,6 +111,11 @@ class InnoSetupTask extends AbstractPackagerTask {
     @Override
     protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         return application.resolve("jdk");
+    }
+
+    @Override
+    protected Path calculateRootPath(Path image) throws Exception {
+        return FileUtils.find(image, "*/bin").get(0).getParent();
     }
 
     private Path findLauncher(Path binDir) throws IOException {

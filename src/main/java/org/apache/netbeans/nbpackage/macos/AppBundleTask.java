@@ -132,6 +132,11 @@ class AppBundleTask extends AbstractPackagerTask {
                 .resolve("Home");
     }
 
+    @Override
+    protected Path calculateRootPath(Path image) throws Exception {
+        return image.resolve(getBundleName() + ".app");
+    }
+
     String getBundleName() {
         if (bundleName == null) {
             var name = sanitize(context().getValue(NBPackage.PACKAGE_NAME).orElseThrow());
