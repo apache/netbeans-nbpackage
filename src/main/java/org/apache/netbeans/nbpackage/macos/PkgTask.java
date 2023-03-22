@@ -41,7 +41,7 @@ class PkgTask extends AppBundleTask {
 
     @Override
     protected Path buildPackage(Path image) throws Exception {
-        Path bundle = super.createPackage(image);
+        Path bundle = super.buildPackage(image);
         String name = context().getValue(NBPackage.PACKAGE_NAME).orElseThrow();
         String version = context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow();
         Path output = context().destination().resolve(
