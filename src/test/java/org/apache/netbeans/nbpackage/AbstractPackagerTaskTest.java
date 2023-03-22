@@ -153,9 +153,6 @@ public class AbstractPackagerTaskTest {
                 .resolve("share").resolve("applications").resolve("app.desktop");
         Files.createDirectories(desktopFile.getParent());
         Files.createFile(desktopFile);
-        Path batFile = root.resolve("__APP").resolve("bin").resolve("app.bat");
-        Files.createDirectories(batFile.getParent());
-        Files.createFile(batFile);
         Path buildFile = root.resolve("config").resolve("build");
         Files.createDirectories(buildFile.getParent());
         Files.createFile(buildFile);
@@ -200,7 +197,7 @@ public class AbstractPackagerTaskTest {
             }
 
             @Override
-            protected Path calculateRootPath(Path image, Path application) throws Exception {
+            protected Path calculateRootPath(Path image) throws Exception {
                 return image.resolve("BUILD");
             }
 
@@ -214,7 +211,6 @@ public class AbstractPackagerTaskTest {
         Path image = context.execute();
         Path appDir = image.resolve("BUILD").resolve("usr").resolve("lib").resolve("app");
         assertTrue(Files.exists(appDir.resolve("bin").resolve("app")));
-        assertTrue(Files.exists(appDir.resolve("bin").resolve("app.bat")));
         assertTrue(Files.exists(appDir.resolve("bin").resolve("LEAVE_ME.exe")));
         assertFalse(Files.exists(appDir.resolve("bin").resolve("REMOVE_ME.exe")));
         assertFalse(Files.exists(appDir.resolve("platform")));

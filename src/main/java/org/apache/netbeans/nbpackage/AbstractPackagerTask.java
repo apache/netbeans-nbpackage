@@ -147,11 +147,11 @@ public abstract class AbstractPackagerTask implements Packager.Task {
                 .map(Path::toAbsolutePath)
                 .orElse(null);
         if (mergeSource != null) {
-            Path rootDir = calculateRootPath(image, appDir);
+            Path rootDir = calculateRootPath(image);
             if (Files.isDirectory(mergeSource)) {
-                processMergeFromDirectory(mergeSource, image, rootDir, appDir);
+                processMergeFromDirectory(mergeSource, image, rootDir);
             } else if (Files.isRegularFile(mergeSource)) {
-                processMergeFromArchive(mergeSource, image, rootDir, appDir);
+                processMergeFromArchive(mergeSource, image, rootDir);
             } else {
                 throw new IllegalArgumentException(mergeSource.toString());
             }
@@ -304,11 +304,10 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      * directory itself.
      *
      * @param image image path
-     * @param application application path
      * @return resolved root path
      * @throws Exception if unable to compute path
      */
-    protected Path calculateRootPath(Path image, Path application) throws Exception {
+    protected Path calculateRootPath(Path image) throws Exception {
         return image;
     }
 
@@ -374,15 +373,15 @@ public abstract class AbstractPackagerTask implements Packager.Task {
     }
 
     private void processMergeFromArchive(Path archive, Path image,
-            Path rootDir, Path appDir) throws IOException {
+            Path rootDir) throws IOException {
         var tmp = Files.createTempDirectory("nbpackageMergeExtract");
         FileUtils.extractArchive(archive, tmp);
-        processMergeFromDirectory(tmp, image, rootDir, appDir);
+        processMergeFromDirectory(tmp, image, rootDir);
         FileUtils.deleteFiles(tmp);
     }
 
     private void processMergeFromDirectory(Path sourceDir, Path imageDir,
-            Path rootDir, Path appDir) throws IOException {
+            Path rootDir) throws IOException {
         try (var stream = Files.list(sourceDir)) {
             var files = stream.sorted().collect(Collectors.toList());
             for (Path file : files) {
@@ -391,8 +390,6 @@ public abstract class AbstractPackagerTask implements Packager.Task {
                     Path dest;
                     if ("__ROOT".equals(name)) {
                         dest = rootDir;
-                    } else if ("__APP".equals(name)) {
-                        dest = appDir;
                     } else {
                         dest = imageDir.resolve(name);
                         Files.createDirectories(dest);
