@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -367,7 +368,12 @@ public abstract class AbstractPackagerTask implements Packager.Task {
 
     private void removeFromImage(Path image, String pattern) throws IOException {
         var filesToRemove = FileUtils.find(image, pattern);
+        String message = context().isVerbose()
+                ? NBPackage.MESSAGES.getString("message.removing") : null;
         for (Path file : filesToRemove) {
+            if (message != null) {
+                context().infoHandler().accept(MessageFormat.format(message, image.getParent().relativize(file)));
+            }
             FileUtils.deleteFiles(file);
         }
     }
@@ -382,6 +388,10 @@ public abstract class AbstractPackagerTask implements Packager.Task {
 
     private void processMergeFromDirectory(Path sourceDir, Path imageDir,
             Path rootDir) throws IOException {
+        String messageFile = context().isVerbose()
+                ? NBPackage.MESSAGES.getString("message.mergingfile") : null;
+        String messageDir = context().isVerbose()
+                ? NBPackage.MESSAGES.getString("message.mergingdir") : null;
         try (var stream = Files.list(sourceDir)) {
             var files = stream.sorted().collect(Collectors.toList());
             for (Path file : files) {
@@ -394,9 +404,19 @@ public abstract class AbstractPackagerTask implements Packager.Task {
                         dest = imageDir.resolve(name);
                         Files.createDirectories(dest);
                     }
+                    if (messageDir != null) {
+                        context().infoHandler().accept(MessageFormat.format(messageDir,
+                                sourceDir.relativize(file),
+                                imageDir.getParent().relativize(dest)));
+                    }
                     FileUtils.copyFiles(file, dest);
                 } else {
                     Path dest = imageDir.resolve(file.getFileName());
+                    if (messageFile != null) {
+                        context().infoHandler().accept(MessageFormat.format(messageFile,
+                                sourceDir.relativize(file),
+                                imageDir.getParent().relativize(dest)));
+                    }
                     Files.copy(file, dest, StandardCopyOption.COPY_ATTRIBUTES);
                     FileUtils.ensureWritable(dest);
                 }
