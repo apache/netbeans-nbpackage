@@ -21,7 +21,9 @@ package org.apache.netbeans.nbpackage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base class for Packager.Task implementations. Contains support for
@@ -96,10 +98,66 @@ public abstract class AbstractPackagerTask implements Packager.Task {
      */
     @Override
     public final Path createImage(Path input) throws Exception {
-        Path image = createBaseImage(input);
+        String imageName = imageName(input);
+        Path image = context.destination().resolve(imageName);
+        Files.createDirectory(image);
+
+        Path appDir = applicationDirectory(image);
+        Files.createDirectories(appDir);
+        if (Files.isDirectory(input)) {
+            copyAppFromDirectory(input, appDir);
+        } else if (Files.isRegularFile(input)) {
+            extractAppFromArchive(input, appDir);
+        } else {
+            throw new IllegalArgumentException(input.toString());
+        }
+
+        Path runtime = context.getValue(NBPackage.PACKAGE_RUNTIME)
+                .map(Path::toAbsolutePath)
+                .orElse(null);
+        if (runtime != null) {
+            Path runtimeDir = runtimeDirectory(image, appDir);
+            Files.createDirectories(runtimeDir);
+            if (Files.isDirectory(runtime)) {
+                copyRuntimeFromDirectory(runtime, runtimeDir);
+            } else if (Files.isRegularFile(runtime)) {
+                extractRuntimeFromArchive(runtime, runtimeDir);
+            } else {
+                throw new IllegalArgumentException(runtime.toString());
+            }
+            if (runtimeDir.startsWith(appDir)) {
+                String jdkhome = appDir.relativize(runtimeDir).toString();
+                try (var confs = Files.newDirectoryStream(appDir.resolve("etc"), "*.conf")) {
+                    for (Path conf : confs) {
+                        addRuntimeToConf(conf, jdkhome);
+                    }
+                }
+            }
+        }
+
         customizeImage(image);
-        filterImage(image);
+
+        String filterPattern = context.getValue(NBPackage.PACKAGE_REMOVE).orElse(null);
+        if (filterPattern != null) {
+            removeFromImage(image, filterPattern);
+        }
+
+        Path mergeSource = context.getValue(NBPackage.PACKAGE_MERGE)
+                .map(Path::toAbsolutePath)
+                .orElse(null);
+        if (mergeSource != null) {
+            Path rootDir = calculateRootPath(image, appDir);
+            if (Files.isDirectory(mergeSource)) {
+                processMergeFromDirectory(mergeSource, image, rootDir, appDir);
+            } else if (Files.isRegularFile(mergeSource)) {
+                processMergeFromArchive(mergeSource, image, rootDir, appDir);
+            } else {
+                throw new IllegalArgumentException(mergeSource.toString());
+            }
+        }
+
         finalizeImage(image);
+
         return image;
     }
 
@@ -233,48 +291,24 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         return application.resolve("jdk");
     }
 
-    private Path createBaseImage(Path input) throws Exception {
-        String imageName = imageName(input);
-        Path image = context.destination().resolve(imageName);
-        Files.createDirectory(image);
-
-        Path appDir = applicationDirectory(image);
-        Files.createDirectories(appDir);
-        if (Files.isDirectory(input)) {
-            copyAppFromDirectory(input, appDir);
-        } else if (Files.isRegularFile(input)) {
-            extractAppFromArchive(input, appDir);
-        } else {
-            throw new IllegalArgumentException(input.toString());
-        }
-
-        Path runtime = context.getValue(NBPackage.PACKAGE_RUNTIME)
-                .map(Path::toAbsolutePath)
-                .orElse(null);
-        if (runtime != null) {
-            Path runtimeDir = runtimeDirectory(image, appDir);
-            Files.createDirectories(runtimeDir);
-            if (Files.isDirectory(runtime)) {
-                copyRuntimeFromDirectory(runtime, runtimeDir);
-            } else if (Files.isRegularFile(runtime)) {
-                extractRuntimeFromArchive(runtime, runtimeDir);
-            } else {
-                throw new IllegalArgumentException(runtime.toString());
-            }
-            if (runtimeDir.startsWith(appDir)) {
-                String jdkhome = appDir.relativize(runtimeDir).toString();
-                try (var confs = Files.newDirectoryStream(appDir.resolve("etc"), "*.conf")) {
-                    for (Path conf : confs) {
-                        addRuntimeToConf(conf, jdkhome);
-                    }
-                }
-            }
-        }
+    /**
+     * Hook to calculate the root path, mainly used in merging files. The
+     * default implementation returns the image directory itself. Subclasses may
+     * override to provide a more suitable path in the image.
+     * <p>
+     * The notion of suitable root path will differ from packager to packager.
+     * It should be the root of files within the image that are installed on the
+     * end user's system. This may be the path relating to the filesystem root
+     * in a Linux package, the root of a macOS app bundle, or the application
+     * directory itself.
+     *
+     * @param image image path
+     * @param application application path
+     * @return resolved root path
+     * @throws Exception if unable to compute path
+     */
+    protected Path calculateRootPath(Path image, Path application) throws Exception {
         return image;
-    }
-
-    private void filterImage(Path image) throws Exception {
-        // no op placeholder for merge / delete support
     }
 
     private void extractAppFromArchive(Path input, Path destDir) throws IOException {
@@ -329,6 +363,47 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         // @TODO - fix this when relative links work with IDE launcher
         // contents = contents.replace("#netbeans_jdkhome=\"/path/to/jdk\"", "netbeans_jdkhome=\"" + jdkhome + "\"");
         Files.writeString(conf, contents);
+    }
+
+    private void removeFromImage(Path image, String pattern) throws IOException {
+        var filesToRemove = FileUtils.find(image, pattern);
+        for (Path file : filesToRemove) {
+            FileUtils.deleteFiles(file);
+        }
+    }
+
+    private void processMergeFromArchive(Path archive, Path image,
+            Path rootDir, Path appDir) throws IOException {
+        var tmp = Files.createTempDirectory("nbpackageMergeExtract");
+        FileUtils.extractArchive(archive, tmp);
+        processMergeFromDirectory(tmp, image, rootDir, appDir);
+        FileUtils.deleteFiles(tmp);
+    }
+
+    private void processMergeFromDirectory(Path sourceDir, Path imageDir,
+            Path rootDir, Path appDir) throws IOException {
+        try (var stream = Files.list(sourceDir)) {
+            var files = stream.sorted().collect(Collectors.toList());
+            for (Path file : files) {
+                if (Files.isDirectory(file)) {
+                    String name = file.getFileName().toString();
+                    Path dest;
+                    if ("__ROOT".equals(name)) {
+                        dest = rootDir;
+                    } else if ("__APP".equals(name)) {
+                        dest = appDir;
+                    } else {
+                        dest = imageDir.resolve(name);
+                        Files.createDirectories(dest);
+                    }
+                    FileUtils.copyFiles(file, dest);
+                } else {
+                    Path dest = imageDir.resolve(file.getFileName());
+                    Files.copy(file, dest, StandardCopyOption.COPY_ATTRIBUTES);
+                    FileUtils.ensureWritable(dest);
+                }
+            }
+        }
     }
 
 }

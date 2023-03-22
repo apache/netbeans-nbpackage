@@ -105,7 +105,7 @@ public class AbstractPackagerTaskTest {
         assertTrue(Files.exists(image.resolve("platform").resolve("module")));
         assertFalse(Files.exists(image.resolve("jdk")));
     }
-    
+
     /**
      * Test extraction of the input zip and runtime zip to create a base image.
      */
@@ -144,6 +144,84 @@ public class AbstractPackagerTaskTest {
         assertTrue(Files.exists(image.resolve("etc").resolve("app.conf")));
         assertTrue(Files.exists(image.resolve("platform").resolve("module")));
         assertTrue(Files.exists(image.resolve("jdk").resolve("bin").resolve("java")));
+    }
+
+    @Test
+    public void testFilterImage() throws Exception {
+        Path root = Files.createDirectory(tmpDir.resolve("mergeRoot"));
+        Path desktopFile = root.resolve("__ROOT").resolve("usr")
+                .resolve("share").resolve("applications").resolve("app.desktop");
+        Files.createDirectories(desktopFile.getParent());
+        Files.createFile(desktopFile);
+        Path batFile = root.resolve("__APP").resolve("bin").resolve("app.bat");
+        Files.createDirectories(batFile.getParent());
+        Files.createFile(batFile);
+        Path buildFile = root.resolve("config").resolve("build");
+        Files.createDirectories(buildFile.getParent());
+        Files.createFile(buildFile);
+        Files.createFile(root.resolve("README"));
+
+        Path mergeZip = tmpDir.resolve("mergeRoot.zip");
+        FileUtils.createZipArchive(root, mergeZip);
+
+        Configuration config = Configuration.builder()
+                .set(NBPackage.PACKAGE_NAME, "App")
+                .set(NBPackage.PACKAGE_RUNTIME, runtime.toString())
+                .set(NBPackage.PACKAGE_MERGE, mergeZip.toString())
+                .set(NBPackage.PACKAGE_REMOVE, "{*.exe,**/platform}")
+                .build();
+        Path output = Files.createDirectory(tmpDir.resolve("filterOutput"));
+        class TestTask extends AbstractPackagerTask {
+
+            public TestTask(ExecutionContext context) {
+                super(context);
+            }
+
+            @Override
+            protected Path buildPackage(Path image) throws Exception {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            protected void customizeImage(Path image) throws Exception {
+                Files.createFile(image.resolve("BUILD").resolve("usr").resolve("lib")
+                        .resolve("app").resolve("bin").resolve("REMOVE_ME.exe"));
+            }
+
+            @Override
+            protected void finalizeImage(Path image) throws Exception {
+                Files.createFile(image.resolve("BUILD").resolve("usr").resolve("lib")
+                        .resolve("app").resolve("bin").resolve("LEAVE_ME.exe"));
+            }
+
+            @Override
+            protected Path applicationDirectory(Path image) throws Exception {
+                return image.resolve("BUILD").resolve("usr").resolve("lib").resolve("app");
+            }
+
+            @Override
+            protected Path calculateRootPath(Path image, Path application) throws Exception {
+                return image.resolve("BUILD");
+            }
+
+        }
+        ExecutionContext context = new ExecutionContext(
+                new TestPackager("Test Image Filtering", TestTask::new),
+                input,
+                config,
+                output,
+                true);
+        Path image = context.execute();
+        Path appDir = image.resolve("BUILD").resolve("usr").resolve("lib").resolve("app");
+        assertTrue(Files.exists(appDir.resolve("bin").resolve("app")));
+        assertTrue(Files.exists(appDir.resolve("bin").resolve("app.bat")));
+        assertTrue(Files.exists(appDir.resolve("bin").resolve("LEAVE_ME.exe")));
+        assertFalse(Files.exists(appDir.resolve("bin").resolve("REMOVE_ME.exe")));
+        assertFalse(Files.exists(appDir.resolve("platform")));
+        assertTrue(Files.exists(image.resolve("BUILD").resolve("usr").resolve("share")
+                .resolve("applications").resolve("app.desktop")));
+        assertTrue(Files.exists(image.resolve("config").resolve("build")));
+        assertTrue(Files.exists(image.resolve("README")));
     }
 
     private static class TestPackager implements Packager {

@@ -347,7 +347,7 @@ public class FileUtils {
         }
     }
 
-    private static void ensureWritable(Path path) throws IOException {
+    static void ensureWritable(Path path) throws IOException {
         if (Files.isWritable(path) || Files.isSymbolicLink(path)) {
             return;
         }
