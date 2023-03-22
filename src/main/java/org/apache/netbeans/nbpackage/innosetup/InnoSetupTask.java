@@ -18,9 +18,7 @@
  */
 package org.apache.netbeans.nbpackage.innosetup;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -57,6 +55,11 @@ class InnoSetupTask extends AbstractPackagerTask {
 
         setupIcons(image, execName);
         setupLicenseFile(image);
+    }
+
+    @Override
+    protected void finalizeImage(Path image) throws Exception {
+        String execName = findExecName(image.resolve("APPDIR").resolve("bin"));
         createInnoSetupScript(image, execName);
     }
 
@@ -136,7 +139,7 @@ class InnoSetupTask extends AbstractPackagerTask {
             );
         }
     }
-    
+
     private void setupLicenseFile(Path image) throws IOException {
         var license = context().getValue(LICENSE_PATH).orElse(null);
         if (license == null) {
