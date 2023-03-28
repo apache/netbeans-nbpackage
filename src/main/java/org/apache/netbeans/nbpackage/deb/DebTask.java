@@ -50,7 +50,6 @@ class DebTask extends AbstractPackagerTask {
 
     @Override
     protected void checkImageRequirements() throws Exception {
-        super.validateCreateImage();
         if (context().isImageOnly()) {
             validateTools(DPKG);
         }
