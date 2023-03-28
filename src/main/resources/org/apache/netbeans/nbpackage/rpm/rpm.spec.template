@@ -20,8 +20,4 @@ AutoReqProv:    no
 ${RPM_DESCRIPTION}
 
 %files
-/usr/bin/${RPM_EXEC_NAME}
-/usr/lib/%{name}
-/usr/share/applications/${RPM_DESKTOP_NAME}
-/usr/share/icons/hicolor/48x48/apps/%{name}.png
-/usr/share/icons/hicolor/scalable/apps/%{name}.svg
+${RPM_FILES}

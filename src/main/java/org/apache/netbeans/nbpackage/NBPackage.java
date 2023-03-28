@@ -101,6 +101,22 @@ public final class NBPackage {
             MESSAGES.getString("option.description.default"),
             MESSAGES.getString("option.description.help"));
 
+    /**
+     * Option definition for a merge source (zip or directory path) of
+     * additional files to be added to the final image.
+     */
+    public static final Option<Path> PACKAGE_MERGE = Option.ofPath(
+            "package.merge",
+            MESSAGES.getString("option.merge.help"));
+
+    /**
+     * Option definition for a glob pattern of files to remove from the final
+     * image.
+     */
+    public static final Option<String> PACKAGE_REMOVE = Option.ofString(
+            "package.remove",
+            MESSAGES.getString("option.remove.help"));
+
 // @TODO generate list from service loader if modularizing
     private static final List<Packager> PACKAGERS = List.of(
             new AppImagePackager(),
@@ -113,7 +129,8 @@ public final class NBPackage {
 
     private static final List<Option<?>> GLOBAL_OPTIONS
             = List.of(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE, PACKAGE_RUNTIME,
-                    PACKAGE_DESCRIPTION, PACKAGE_PUBLISHER, PACKAGE_URL);
+                    PACKAGE_DESCRIPTION, PACKAGE_PUBLISHER, PACKAGE_URL,
+                    PACKAGE_MERGE, PACKAGE_REMOVE);
 
     private NBPackage() {
         // no op

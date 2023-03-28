@@ -49,7 +49,7 @@ class DebTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreateImage() throws Exception {
+    protected void checkImageRequirements() throws Exception {
         super.validateCreateImage();
         if (context().isImageOnly()) {
             validateTools(DPKG);
@@ -57,13 +57,12 @@ class DebTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         validateTools(DPKG, DPKG_DEB, FAKEROOT);
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         String pkgName = packageName();
 
         // @TODO support other installation bases
@@ -89,11 +88,10 @@ class DebTask extends AbstractPackagerTask {
         Files.createDirectories(DEBIAN);
         setupControlFile(DEBIAN);
 
-        return image;
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected Path buildPackage(Path image) throws Exception {
         String targetName = image.getFileName().toString() + ".deb";
         Path target = context().destination().resolve(targetName).toAbsolutePath();
         if (Files.exists(target)) {
@@ -110,12 +108,12 @@ class DebTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
+    protected String calculateImageName(Path input) throws Exception {
         return packageName() + "_" + packageVersion() + "_" + packageArch();
     }
 
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve("usr").resolve("lib").resolve("APPDIR");
     }
 

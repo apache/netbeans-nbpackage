@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
 package org.apache.netbeans.nbpackage.zip;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.FileUtils;
@@ -34,25 +31,23 @@ class ZipPackageTask extends AbstractPackagerTask {
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected void customizeImage(Path image) throws Exception {
+        // no op
+    }
+
+    @Override
+    protected Path buildPackage(Path image) throws Exception {
         Path dst = context().destination().resolve(image.getFileName().toString() + ".zip");
         FileUtils.createZipArchive(image, dst);
         return dst;
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
-        // no op
-    }
-
-    @Override
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         if (Files.exists(application.resolve("bin").resolve("netbeans"))) {
             context().warningHandler().accept(ZipPackager.MESSAGES.getString("zip.nbruntime.warning"));
         }
-        return super.runtimeDirectory(image, application);
+        return super.calculateRuntimePath(image, application);
     }
-    
-    
 
 }

@@ -28,8 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
+import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
 import org.apache.netbeans.nbpackage.StringUtils;
 
@@ -47,21 +49,19 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreateImage() throws Exception {
-        super.validateCreateImage();
+    protected void checkImageRequirements() throws Exception {
         if (context().isImageOnly()) {
             validateTools(RPM);
         }
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         validateTools(RPM, RPMBUILD);
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         String pkgName = packageName();
 
         // @TODO support other installation bases
@@ -94,15 +94,15 @@ class RpmTask extends AbstractPackagerTask {
         Path rpmsDir = image.resolve("RPMS");
         Files.createDirectories(rpmsDir);
 
-        Path specsDir = image.resolve("SPECS");
-        Files.createDirectories(specsDir);
-        setupSpecFile(specsDir, execName, desktopFile.getFileName().toString());
-
-        return image;
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected void finalizeImage(Path image) throws Exception {
+        setupSpecFile(image);
+    }
+
+    @Override
+    protected Path buildPackage(Path image) throws Exception {
         Path spec = image.resolve("SPECS").resolve(packageName() + ".spec");
         int result = context().exec(RPMBUILD, "--target", packageArch(),
                 "--define", "_topdir " + image.toAbsolutePath().toString(),
@@ -126,13 +126,22 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
+    protected String calculateImageName(Path input) throws Exception {
         return packageName() + "-" + packageVersion() + "." + packageArch();
     }
 
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve("usr").resolve("lib").resolve("APPDIR");
+    }
+
+    @Override
+    protected Path calculateRootPath(Path image) throws Exception {
+        var builds = FileUtils.find(image, "BUILDROOT/*");
+        if (builds.size() != 1) {
+            throw new IOException(builds.toString());
+        }
+        return builds.get(0);
     }
 
     private void validateTools(String... tools) throws Exception {
@@ -193,7 +202,7 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     private Path findLauncher(Path binDir) throws IOException {
-        try ( var files = Files.list(binDir)) {
+        try (var files = Files.list(binDir)) {
             return files.filter(f -> !f.getFileName().toString().endsWith(".exe"))
                     .findFirst().orElseThrow(IOException::new);
         }
@@ -265,8 +274,9 @@ class RpmTask extends AbstractPackagerTask {
         return desktopFile;
     }
 
-    private void setupSpecFile(Path specsDir, String execName, String desktopName) throws Exception {
+    private void setupSpecFile(Path image) throws Exception {
         String template = RpmPackager.SPEC_TEMPLATE.load(context());
+        String fileList = buildSpecFilesList(image);
         String spec = StringUtils.replaceTokens(template, Map.ofEntries(
                 Map.entry("RPM_PACKAGE", packageName()),
                 Map.entry("RPM_VERSION", packageVersion()),
@@ -294,11 +304,37 @@ class RpmTask extends AbstractPackagerTask {
                         .orElse("Recommends: java-devel >= 11")),
                 Map.entry("RPM_DESCRIPTION", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
                         .orElse("")),
-                Map.entry("RPM_EXEC_NAME", execName),
-                Map.entry("RPM_DESKTOP_NAME", desktopName)
+                Map.entry("RPM_FILES", fileList)
         ));
-
+        Path specsDir = image.resolve("SPECS");
+        Files.createDirectories(specsDir);
         Path specFile = specsDir.resolve(packageName + ".spec");
         Files.writeString(specFile, spec, StandardOpenOption.CREATE_NEW);
+    }
+
+    private String buildSpecFilesList(Path image) throws IOException {
+        var builds = FileUtils.find(image, "BUILDROOT/*");
+        if (builds.size() != 1) {
+            throw new IOException(builds.toString());
+        }
+        var root = builds.get(0);
+        // @TODO support other installation bases
+        var appParent = root.resolve("usr").resolve("lib");
+        try (var stream = Files.find(root, Integer.MAX_VALUE, (file, attr) -> {
+            if (file.equals(root)) {
+                return false;
+            }
+            if (attr.isDirectory()) {
+                return file.getParent().equals(appParent);
+            } else {
+                return !file.startsWith(appParent);
+            }
+        })) {
+            return stream.map(path -> root.relativize(path))
+                    .sorted()
+                    .map(Path::toString)
+                    .map(p -> "/" + p)
+                    .collect(Collectors.joining("\n", "", "\n"));
+        }
     }
 }

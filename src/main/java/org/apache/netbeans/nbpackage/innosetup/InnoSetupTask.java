@@ -18,9 +18,7 @@
  */
 package org.apache.netbeans.nbpackage.innosetup;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -30,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
+import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
 import org.apache.netbeans.nbpackage.StringUtils;
 
@@ -42,15 +41,14 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     @Override
-    public void validateCreatePackage() throws Exception {
+    protected void checkPackageRequirements() throws Exception {
         context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")));
     }
 
     @Override
-    public Path createImage(Path input) throws Exception {
-        Path image = super.createImage(input);
+    protected void customizeImage(Path image) throws Exception {
         String execName = findExecName(image.resolve("APPDIR").resolve("bin"));
 
         Path appDir = image.resolve(execName);
@@ -58,13 +56,16 @@ class InnoSetupTask extends AbstractPackagerTask {
 
         setupIcons(image, execName);
         setupLicenseFile(image);
-        createInnoSetupScript(image, execName);
-
-        return image;
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
+    protected void finalizeImage(Path image) throws Exception {
+        String execName = findExecName(FileUtils.find(image, "*/bin").get(0));
+        createInnoSetupScript(image, execName);
+    }
+
+    @Override
+    protected Path buildPackage(Path image) throws Exception {
         Path tool = context().getValue(TOOL_PATH)
                 .orElseThrow(() -> new IllegalStateException(
                 MESSAGES.getString("message.noinnosetuptool")))
@@ -98,18 +99,23 @@ class InnoSetupTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
-        return super.imageName(input) + "-InnoSetup";
+    protected String calculateImageName(Path input) throws Exception {
+        return super.calculateImageName(input) + "-InnoSetup";
     }
 
     @Override
-    protected Path applicationDirectory(Path image) throws Exception {
+    protected Path calculateAppPath(Path image) throws Exception {
         return image.resolve("APPDIR");
     }
 
     @Override
-    protected Path runtimeDirectory(Path image, Path application) throws Exception {
+    protected Path calculateRuntimePath(Path image, Path application) throws Exception {
         return application.resolve("jdk");
+    }
+
+    @Override
+    protected Path calculateRootPath(Path image) throws Exception {
+        return FileUtils.find(image, "*/bin").get(0).getParent();
     }
 
     private Path findLauncher(Path binDir) throws IOException {
@@ -139,7 +145,7 @@ class InnoSetupTask extends AbstractPackagerTask {
             );
         }
     }
-    
+
     private void setupLicenseFile(Path image) throws IOException {
         var license = context().getValue(LICENSE_PATH).orElse(null);
         if (license == null) {

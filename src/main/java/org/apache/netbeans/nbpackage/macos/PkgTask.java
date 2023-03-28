@@ -34,14 +34,14 @@ class PkgTask extends AppBundleTask {
     }
     
     @Override
-    public void validateCreatePackage() throws Exception {
-        super.validateCreatePackage();
+    protected void checkPackageRequirements() throws Exception {
+        super.checkPackageRequirements();
         validateTools("pkgbuild");
     }
 
     @Override
-    public Path createPackage(Path image) throws Exception {
-        Path bundle = super.createPackage(image);
+    protected Path buildPackage(Path image) throws Exception {
+        Path bundle = super.buildPackage(image);
         String name = context().getValue(NBPackage.PACKAGE_NAME).orElseThrow();
         String version = context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow();
         Path output = context().destination().resolve(
@@ -74,8 +74,8 @@ class PkgTask extends AppBundleTask {
     }
 
     @Override
-    protected String imageName(Path input) throws Exception {
-        return super.imageName(input) + "-pkg";
+    protected String calculateImageName(Path input) throws Exception {
+        return super.calculateImageName(input) + "-pkg";
     }
 
 }
