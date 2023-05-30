@@ -229,8 +229,15 @@ public class FileUtils {
     /**
      * Find the directories in the given search directory that contains files
      * that match the given glob patterns. This might include the search
-     * directory itself. eg. to find NetBeans or a RCP application in a search
-     * directory you might pass <code>"bin/*", "etc/*.conf"</code>.
+     * directory itself. eg. to find the root directory of NetBeans or a RCP
+     * application in a search directory you might pass
+     * <code>"bin/*", "etc/*.conf"</code>.
+     * <p>
+     * All patterns should use <code>/</code> as the separator character, and
+     * should not use <code>**</code>, the boundary crossing wildcard. The
+     * search depth parameter controls the maximum depth of any potential root
+     * directory. The maximum path depth of all patterns is used to control how
+     * deep the search is <em>within</em> each potential root.
      *
      * @param searchDir search directory
      * @param searchDepth search depth
@@ -243,8 +250,8 @@ public class FileUtils {
                 .map(p -> FileSystems.getDefault().getPathMatcher("glob:" + p))
                 .collect(Collectors.toList());
         var intDepth = Stream.of(patterns)
-                .map(Path::of)
-                .mapToInt(Path::getNameCount)
+                .map(p -> p.split("/"))
+                .mapToInt(ps -> ps.length)
                 .max().orElse(1);
         try (var stream = Files.find(searchDir, searchDepth, (intPath, attr) -> {
             return matchers.stream().map(m -> {
