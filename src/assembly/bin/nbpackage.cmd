@@ -63,9 +63,6 @@ goto repoSetup
 
 :WinNTGetScriptDir
 for %%i in ("%~dp0..") do set "BASEDIR=%%~fi"
-echo %~dp0
-echo %~dp0..
-echo %BASEDIR%
 
 :repoSetup
 set REPO=
