@@ -61,6 +61,14 @@ class MacOS {
     static final Template INFO_TEMPLATE
             = Template.of(INFO_TEMPLATE_PATH, "Info.plist.template",
                     () -> MacOS.class.getResourceAsStream("Info.plist.template"));
+    /**
+     * Target system architecture to use for building launcher, etc. Currently
+     * supported values are aarch64, x86_64 and universal. Default attempts to
+     * parse from runtime file, if present, or universal.
+     */
+    static final Option<String> ARCH
+            = Option.ofString("package.macos.arch",
+                    MESSAGES.getString("option.arch.help"));
 
     /**
      * Optional launcher (main.swift) template path.
