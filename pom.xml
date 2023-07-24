@@ -210,6 +210,13 @@ under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <configuration>
+          <topSiteURL>${project.distributionManagement.site.url}</topSiteURL>
+        </configuration>
+      </plugin>
     </plugins>
     <resources>
       <resource>
