@@ -32,7 +32,7 @@ under the License.
   <packaging>jar</packaging>
   
   <name>Apache NetBeans NBPackage</name>
-  <url>https://netbeans.apache.org</url>
+  <url>https://bits.netbeans.org/nbpackage/</url>
   <description>Apache NetBeans packaging utility.</description>
   
   <scm>
@@ -213,6 +213,7 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
+        <version>4.0.0-M9</version>
         <configuration>
           <topSiteURL>${project.distributionManagement.site.url}</topSiteURL>
         </configuration>
@@ -237,5 +238,8 @@ under the License.
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.jupiter.version>5.9.3</junit.jupiter.version>
+    <skin.groupId>org.apache.maven.skins</skin.groupId>
+    <skin.artifactId>maven-fluido-skin</skin.artifactId>
+    <skin.version>2.0.0-M6</skin.version>
   </properties>
 </project>
