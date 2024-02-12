@@ -102,9 +102,10 @@ this is less useful there.
 
 ## Building from source
 
-Building `nbpackage` requires Maven and JDK 11+. Building in the IDE or executing
-`mvn package` will build the tool. Output can be found in `target/nbpackage-<VERSION>/`,
-as well as adjacent source and binary archives.
+Building `nbpackage` requires JDK 11+. The project uses the Maven Wrapper.
+Building in the IDE or executing `mvnw package` will build the tool. Output can
+be found in `target/nbpackage-<VERSION>/`, as well as adjacent source and binary
+archives.
 
 Run `./nbpackage-<VERSION>/bin/nbpackage --help` to check.
 
