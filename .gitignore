@@ -10,3 +10,4 @@ dependency-reduced-pom.xml
 
 # NetBeans related files #
 nbproject/
+nb-configuration.xml
