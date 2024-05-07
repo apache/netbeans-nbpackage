@@ -29,7 +29,7 @@ import org.apache.netbeans.nbpackage.Template;
 class MacOS {
 
     private static final String DEFAULT_BIN_GLOB = "{*.dylib,*.jnilib,**/nativeexecution/MacOSX-*/*,Contents/Home/bin/*,Contents/Home/lib/jspawnhelper}";
-    private static final String DEFAULT_JAR_BIN_GLOB = "{flatlaf*.jar,jna-5*.jar,junixsocket-native-common-*.jar,launcher-common-*.jar,jansi-*.jar,nbi-engine.jar}";
+    private static final String DEFAULT_JAR_BIN_GLOB = "{flatlaf-*.jar,jna-5*.jar,junixsocket-native-common-*.jar,launcher-common-*.jar,jansi-*.jar,nbi-engine.jar,truffle-runtime-*.jar}";
 
     static final ResourceBundle MESSAGES
             = ResourceBundle.getBundle(PkgPackager.class.getPackageName() + ".Messages");
