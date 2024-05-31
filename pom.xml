@@ -214,7 +214,7 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
-        <version>4.0.0-M13</version>
+        <version>4.0.0-M15</version>
         <configuration>
           <topSiteURL>${project.distributionManagement.site.url}</topSiteURL>
         </configuration>
