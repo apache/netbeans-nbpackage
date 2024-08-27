@@ -238,7 +238,7 @@ under the License.
  
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <junit.jupiter.version>5.10.2</junit.jupiter.version>
+    <junit.jupiter.version>5.10.3</junit.jupiter.version>
     <skin.groupId>org.apache.maven.skins</skin.groupId>
     <skin.artifactId>maven-fluido-skin</skin.artifactId>
     <skin.version>2.0.0-M8</skin.version>
