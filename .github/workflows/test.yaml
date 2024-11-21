@@ -28,7 +28,7 @@ jobs:
     name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
     strategy:
       matrix:
-        java: [ '11', '17' ]
+        java: [ '11', '21' ]
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
     runs-on: ${{ matrix.os }}
 
@@ -40,5 +40,6 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
         cache: maven
+
     - name: Build with Maven
-      run: ./mvnw --batch-mode clean verify
+      run: ./mvnw --batch-mode --no-transfer-progress clean verify
