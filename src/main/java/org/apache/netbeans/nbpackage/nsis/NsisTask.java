@@ -176,7 +176,7 @@ class NsisTask extends AbstractPackagerTask {
         String appNameSafe = sanitize(appName);
         String appID = context().getValue(APPID).orElse(appName);
         String appVersion = context().getValue(NBPackage.PACKAGE_VERSION).orElse("1.0");
-
+        String publisher = context().getValue(NBPackage.PACKAGE_PUBLISHER).orElse("");
         String appLicense;
         if (Files.exists(image.resolve("license.txt"))) {
             appLicense = "LicenseFile=license.txt";
@@ -195,6 +195,7 @@ class NsisTask extends AbstractPackagerTask {
                 "APP_NAME_SAFE", appNameSafe,
                 "APP_VERSION", appVersion,
                 "APP_LICENSE", appLicense,
+                "PUBLISHER", publisher,
                 "INSTALL_DELETE", installDeleteSection,
                 "FILES", filesSection,
                 "EXEC_NAME", execName,

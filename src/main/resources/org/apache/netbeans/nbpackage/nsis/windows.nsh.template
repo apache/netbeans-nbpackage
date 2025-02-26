@@ -23,13 +23,14 @@
 !define Application "${APP_NAME}"
 !define ProgramName "${APP_NAME_SAFE}"
 !define BrandingVersion "${APP_VERSION}"
-!define Icon "netbeans\etc\netbeans.ico"
+!define Icon "${EXEC_NAME}\etc\${EXEC_NAME}.ico"
 #!define WelcomeImage "img\welcome_studio.bmp"
 #!define HeaderImage "img\header_studio.bmp"
 !define OutFile "${APP_NAME_SAFE}-${APP_VERSION}-installer.exe"
-!define SourceFolder "netbeans"
+!define SourceFolder "${EXEC_NAME}"
 !define INSTDIR_REG_ROOT "HKLM"
-!define INSTDIR_REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Application}"
+!define INSTDIR_REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Application} ${BrandingVersion}"
+!define "DefaultInstallDir" "$PROGRAMFILES64\${EXEC_NAME}${BrandingVersion}"
 
 #
 # Modules inclusions
@@ -55,7 +56,7 @@
     OutFile "${OutFile}"
     
     # Default install directory
-    #InstallDir "$PROGRAMFILES\${Application}"
+    InstallDir "${DefaultInstallDir}"
     
     # Branding text
     BrandingText "${Application} - ${BrandingVersion}"
@@ -96,7 +97,7 @@
     !insertmacro MUI_PAGE_WELCOME
     
     # License page
-    !insertmacro MUI_PAGE_LICENSE "netbeans\LICENSE"
+    !insertmacro MUI_PAGE_LICENSE "${SourceFolder}\LICENSE"
     
     # Components page
     #!insertmacro MUI_PAGE_COMPONENTS
@@ -142,30 +143,30 @@
         File /r "${SourceFolder}\*"
         
         # Storing install location
-        WriteRegStr "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application}" "InstallDir" $INSTDIR
+        WriteRegStr "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application} ${BrandingVersion}" "InstallDir" $INSTDIR
 
         # Creating directories in the start menu
-        CreateDirectory "$SMPROGRAMS\${Application}"
+        CreateDirectory "$SMPROGRAMS\${Application} ${BrandingVersion}"
         
         # Creating a shortcut to the application
-        CreateShortCut "$SMPROGRAMS\${Application}\${Application}.lnk" "$INSTDIR\${ProgramName}.exe" "" "$INSTDIR\${ProgramName}.exe" 0
+        CreateShortCut "$SMPROGRAMS\${Application} ${BrandingVersion}\${Application} ${BrandingVersion}.lnk" "$INSTDIR\bin\${EXEC_NAME}64.exe" "" "$INSTDIR\bin\${EXEC_NAME}64.exe" 0
         
         # Creating an internet shortcut to the documentation
         
         # Configuring registries for the uninstaller
-        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayName" "${Application} - (remove only)"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayName" "${Application} ${BrandingVersion} - (remove only)"
         WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayIcon" "$INSTDIR\uninstall.exe"
         WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayVersion" "${BrandingVersion}"
-        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "Publisher" "The Apache Software Foundation"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "Publisher" "${PUBLISHER}"
         WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
         WriteRegDWORD "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "NoModify" "1"
         WriteRegDWORD "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "NoRepair" "1"
-
+        
         # Creating the uninstaller
         WriteUninstaller "$INSTDIR\Uninstall.exe"
         
         # Creating a shortcut to the uninstaller
-        CreateShortCut "$SMPROGRAMS\${Application}\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
+        CreateShortCut "$SMPROGRAMS\${Application} ${BrandingVersion}\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
         
         # Closing uninstall log
         !insertmacro UNINSTALL.LOG_CLOSE_INSTALL
@@ -177,21 +178,20 @@ End:
     
     # Uninstaller section
     Section Uninstall
+        SetRegView 64
         # Removing installed files (one line per directory is mandatory)
         !insertmacro UNINSTALL.LOG_UNINSTALL "$INSTDIR"
-        !insertmacro UNINSTALL.LOG_UNINSTALL "$INSTDIR\configuration"
-        !insertmacro UNINSTALL.LOG_UNINSTALL "$INSTDIR\plugins"
-        !insertmacro UNINSTALL.LOG_UNINSTALL "$INSTDIR\features"
         Delete "$INSTDIR\Uninstall.exe"
          
         # Finishing uninstall
         !insertmacro UNINSTALL.LOG_END_UNINSTALL
-        
-        # Remove shortcuts and folders in the start menu
-        RMDir /r "$SMPROGRAMS\${Application}"
-        # Remove folder completly
-        RMDir /r /REBOOTOK "$INSTDIR"
         # Removing registry keys
         DeleteRegKey "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}"
-        DeleteRegKey "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application}"
+        DeleteRegKey "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application} ${BrandingVersion}"
+
+        # Remove shortcuts and folders in the start menu
+        RMDir /r "$SMPROGRAMS\${Application} ${BrandingVersion}"
+        # Remove folder completly
+        RMDir /r /REBOOTOK "$INSTDIR"
+        
     SectionEnd
