@@ -1,0 +1,197 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# Set install directory depending on architecture
+
+#
+# Constants and variables
+#
+
+!define Application "${APP_NAME}"
+!define ProgramName "${APP_NAME_SAFE}"
+!define BrandingVersion "${APP_VERSION}"
+!define Icon "${EXEC_NAME}\etc\${EXEC_NAME}.ico"
+#!define WelcomeImage "img\welcome_studio.bmp"
+#!define HeaderImage "img\header_studio.bmp"
+!define OutFile "${APP_NAME_SAFE}-${APP_VERSION}-installer.exe"
+!define SourceFolder "${EXEC_NAME}"
+!define INSTDIR_REG_ROOT "HKLM"
+!define INSTDIR_REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${Application} ${BrandingVersion}"
+!define "DefaultInstallDir" "$PROGRAMFILES64\${EXEC_NAME}${BrandingVersion}"
+
+#
+# Modules inclusions
+#
+    # Set install directory depending on architecture
+    !include "x64.nsh"
+    !include "LogicLib.nsh"
+    
+    # Modern UI module
+    !include "MUI.nsh"
+    
+    # Uninstall log module
+    !include AdvUninstLog.nsh
+    
+
+#
+# Configuration
+#
+    # Name of the application
+    Name "${Application}"
+    
+    # Output installer file
+    OutFile "${OutFile}"
+    
+    # Default install directory
+    InstallDir "${DefaultInstallDir}"
+    
+    # Branding text
+    BrandingText "${Application} - ${BrandingVersion}"
+
+    # Activating XPStyle
+    XPStyle on
+
+    # Installer icon
+    !define MUI_ICON "${Icon}"
+    
+    # Uninstaller icon
+    !define MUI_UNICON "${Icon}"
+    
+    # Welcome image
+    #!define MUI_WELCOMEFINISHPAGE_BITMAP "${WelcomeImage}"
+    
+    # Activating header image
+    #!define MUI_HEADERIMAGE
+    #!define MUI_HEADERIMAGE_BITMAP "${HeaderImage}"
+
+    # Activating small description for the components page
+    !define MUI_COMPONENTSPAGE_SMALLDESC
+    
+    # Activating a confirmation when aborting the installation
+    !define MUI_ABORTWARNING
+    
+    # Unattended uninstallation
+    !insertmacro UNATTENDED_UNINSTALL
+
+#
+# Pages
+#
+    #
+    # Installer pages
+    #
+    
+    # Welcome page
+    !insertmacro MUI_PAGE_WELCOME
+    
+    # License page
+    !insertmacro MUI_PAGE_LICENSE "${SourceFolder}\LICENSE"
+    
+    # Components page
+    #!insertmacro MUI_PAGE_COMPONENTS
+    
+    # Directory page
+    #!define MUI_DIRECTORYPAGE_VARIABLE $APPLICATION_HOME_DIR
+    !insertmacro MUI_PAGE_DIRECTORY
+    
+    # Installation page
+    !insertmacro MUI_PAGE_INSTFILES
+    
+    # Finish page
+    !insertmacro MUI_PAGE_FINISH
+    
+    #
+    # Uninstaller pages
+    #
+    
+    # Confirmation page
+    !insertmacro MUI_UNPAGE_CONFIRM
+    
+    # Uninstallation page
+    !insertmacro MUI_UNPAGE_INSTFILES
+
+#
+# Languages (the first one is the default one)
+#
+    !insertmacro MUI_LANGUAGE "English"
+
+#
+# Sections
+#
+    # Installer section
+    Section
+        SetRegView 64
+        ReadRegStr $2 "${INSTDIR_REG_ROOT}" "SOFTWARE\JavaSoft\JDK" "CurrentVersion"
+
+        StrCmp $2 "" NoJava
+
+        SetOutPath "$INSTDIR"
+        
+        # Adding installer source files
+        File /r "${SourceFolder}\*"
+        
+        # Storing install location
+        WriteRegStr "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application} ${BrandingVersion}" "InstallDir" $INSTDIR
+
+        # Creating directories in the start menu
+        CreateDirectory "$SMPROGRAMS\${Application} ${BrandingVersion}"
+        
+        # Creating a shortcut to the application
+        CreateShortCut "$SMPROGRAMS\${Application} ${BrandingVersion}\${Application} ${BrandingVersion}.lnk" "$INSTDIR\bin\${EXEC_NAME}64.exe" "" "$INSTDIR\bin\${EXEC_NAME}64.exe" 0
+        
+        # Creating an internet shortcut to the documentation
+        
+        # Configuring registries for the uninstaller
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayName" "${Application} ${BrandingVersion} - (remove only)"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayIcon" "$INSTDIR\uninstall.exe"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "DisplayVersion" "${BrandingVersion}"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "Publisher" "${PUBLISHER}"
+        WriteRegStr "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+        WriteRegDWORD "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "NoModify" "1"
+        WriteRegDWORD "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}" "NoRepair" "1"
+        
+        # Creating the uninstaller
+        WriteUninstaller "$INSTDIR\Uninstall.exe"
+        
+        # Creating a shortcut to the uninstaller
+        CreateShortCut "$SMPROGRAMS\${Application} ${BrandingVersion}\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
+        
+        # Closing uninstall log
+        !insertmacro UNINSTALL.LOG_CLOSE_INSTALL
+        Goto end
+NoJava:
+    MessageBox MB_OK "${Application} installer need an installed JDK to run please get one"    
+End:
+    SectionEnd
+    
+    # Uninstaller section
+    Section Uninstall
+        SetRegView 64
+        # Removing installed files (one line per directory is mandatory)
+        !insertmacro UNINSTALL.LOG_UNINSTALL "$INSTDIR"
+        Delete "$INSTDIR\Uninstall.exe"
+         
+        # Finishing uninstall
+        !insertmacro UNINSTALL.LOG_END_UNINSTALL
+        # Removing registry keys
+        DeleteRegKey "${INSTDIR_REG_ROOT}" "${INSTDIR_REG_KEY}"
+        DeleteRegKey "${INSTDIR_REG_ROOT}" "SOFTWARE\${Application} ${BrandingVersion}"
+
+        # Remove shortcuts and folders in the start menu
+        RMDir /r "$SMPROGRAMS\${Application} ${BrandingVersion}"
+        # Remove folder completly
+        RMDir /r /REBOOTOK "$INSTDIR"
+        
+    SectionEnd
