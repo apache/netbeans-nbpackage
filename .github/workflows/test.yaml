@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: NBPackage
+name: Test
 
 on:
   push:
@@ -25,12 +25,11 @@ on:
 
 jobs:
   linux-build:
-    if: github.ref_type == 'tag'
     name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
     strategy:
       matrix:
-        java: ['21' ]
-        os: [ 'ubuntu-latest' ]
+        java: [ '11', '17', '21' ]
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -41,31 +40,5 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
         cache: maven
-
     - name: Build with Maven
-      run: ./mvnw --batch-mode --no-transfer-progress clean verify
-    
-    - name: Add JRE to distribution filename
-      run: mv target/nbpackage-*-bin.tar.gz target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
-
-    - uses: actions/upload-artifact@v4
-      with:
-        path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
-    
-  release:
-    name: Create draft release with binaries attached when a tag is pushed
-    if: github.ref_type == 'tag'
-    needs: linux-build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: nbpackage-*
-      - name: Display structure of downloaded files
-        run: ls -R .
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: nbpackage-*/*
-          make_latest: true
-          draft: true
+      run: ./mvnw --batch-mode clean verify
