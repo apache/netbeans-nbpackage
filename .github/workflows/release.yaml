@@ -60,7 +60,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          merge_multiple: true
+          merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*
