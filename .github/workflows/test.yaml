@@ -45,5 +45,5 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: nbpackage-${{ matrix.os }}-jre${{ matrix.java }}
-        path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
+        path: target/*-bin.tar.gz
         retention-days: 7
