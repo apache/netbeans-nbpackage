@@ -43,3 +43,19 @@ jobs:
 
     - name: Build with Maven
       run: ./mvnw --batch-mode --no-transfer-progress clean verify
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nbpackage-${{ matrix.os }}-jdk${{ matrix.java }}
+        path: target/*-bin.tar.gz
+    
+  release:
+    if: github.ref_type == 'tag'
+    needs: linux-build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nbpackage-*
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: nbpackage-*
