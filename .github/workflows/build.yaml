@@ -24,20 +24,24 @@ on:
       - '*'           # Push events to every tag not containing /
 
 jobs:
-  linux-build:
-    name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
-    strategy:
-      matrix:
-        java: [ '11', '21' ]
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-    runs-on: ${{ matrix.os }}
+  release-build:
+    name: Build and release
+    runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/create-release@v1
+      id: create_release
+      with:
+        draft: false
+        prerelease: false
+        release_name: ${{ steps.version.outputs.version }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG.md
     - uses: actions/checkout@v4
-    - name: Set up JDK ${{ matrix.java }}
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: ${{ matrix.java }}
+        java-version: 21
         distribution: 'temurin'
         cache: maven
 
@@ -46,5 +50,12 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: $GITHUB_REF_NAME-${{ matrix.os }}-${{ matrix.java }}
-        path: target/GITHUB_REF_NAME-bin.tar.gz
+        name: ${{ github.ref }}
+        path: target/*-bin.tar.gz
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        files: target/*-bin.tar.gz
+
+
