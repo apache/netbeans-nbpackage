@@ -48,6 +48,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
+        name: nbpackage-jre${{ matrix.java }}
         path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
     
   release:
