@@ -29,14 +29,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        release_name: ${{ steps.version.outputs.version }}
-        tag_name: ${{ github.ref }}
-        body_path: CHANGELOG.md
     - uses: actions/checkout@v4
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -48,10 +40,6 @@ jobs:
     - name: Build with Maven
       run: ./mvnw --batch-mode --no-transfer-progress clean verify
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: ${{ github.ref }}
-        path: target/*-bin.tar.gz
     - name: Release
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
