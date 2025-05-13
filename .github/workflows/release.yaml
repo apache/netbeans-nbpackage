@@ -15,22 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: Test
+name: Release
 
 on:
   push:
-  pull_request:
-    # unlocked event is used as super secret restart button
-    types: [opened, synchronize, unlocked]
+    tags:        
+      - '*'
 
 jobs:
   linux-build:
-    name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
+    if: 
+    name: Build for JDK ${{ matrix.java }}
     strategy:
       matrix:
-        java: [ '11', '17', '21' ]
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-    runs-on: ${{ matrix.os }}
+        java: [ '11', '17' , '21' ]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -40,10 +39,31 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
         cache: maven
+
     - name: Build with Maven
-      run: ./mvnw --batch-mode clean verify
+      run: ./mvnw --batch-mode --no-transfer-progress clean verify
+    
+    - name: Add JRE to distribution filename
+      run: mv target/nbpackage-*-bin.tar.gz target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
+
     - uses: actions/upload-artifact@v4
       with:
-        name: nbpackage-${{ matrix.os }}-jre${{ matrix.java }}
-        path: target/*-bin.tar.gz
+        name: nbpackage-jre${{ matrix.java }}
+        path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
         retention-days: 7
+    
+  release:
+    name: Create draft release with binaries attached
+    needs: linux-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          make_latest: true
+          draft: true
