@@ -52,6 +52,7 @@ jobs:
   release:
     if: github.ref_type == 'tag'
     needs: linux-build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
