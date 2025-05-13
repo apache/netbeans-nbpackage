@@ -59,13 +59,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: nbpackage-*
-          path: artifacts
       - name: Display structure of downloaded files
-        run: ls -R artifacts
-      - name: Display cwd
-        run: cwd
+        run: ls -R .
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/nbpackage-*
+          files: nbpackage-*
           make_latest: true
           draft: true
