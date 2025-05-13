@@ -46,18 +46,23 @@ jobs:
     
     - uses: actions/upload-artifact@v4
       with:
-        name: nbpackage-${{ matrix.os }}-jdk${{ matrix.java }}
+        name: nbpackage-${{ matrix.os }}-jdk${{ matrix.java }}.zip
         path: target/*-bin.tar.gz
     
   release:
+    name: Create draft release with binaries attached when a tag is pushed
     if: github.ref_type == 'tag'
     needs: linux-build
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/download-artifact@v4
         with:
           pattern: nbpackage-*
+          path: artifacts
+
       - uses: softprops/action-gh-release@v2
         with:
-          files: nbpackage-*
+          files: artifacts/nbpackage-*
           make_latest: true
+          draft: true
