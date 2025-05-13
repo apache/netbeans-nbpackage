@@ -42,3 +42,8 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: ./mvnw --batch-mode clean verify
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nbpackage-${{ matrix.os }}-jre${{ matrix.java }}
+        path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
+        retention-days: 7

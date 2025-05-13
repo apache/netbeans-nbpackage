@@ -50,6 +50,7 @@ jobs:
       with:
         name: nbpackage-jre${{ matrix.java }}
         path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
+        retention-days: 7
     
   release:
     name: Create draft release with binaries attached
