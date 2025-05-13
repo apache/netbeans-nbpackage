@@ -44,11 +44,13 @@ jobs:
 
     - name: Build with Maven
       run: ./mvnw --batch-mode --no-transfer-progress clean verify
-   
+    
+    - name: Add JRE to distribution filename
+      run: mv target/nbpackage-*-bin.tar.gz target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
+
     - uses: actions/upload-artifact@v4
       with:
-        name: nbpackage-${{ matrix.os }}-jdk${{ matrix.java }}
-        path: target/*-bin.tar.gz
+        path: target/nbpackage-jre${{ matrix.java }}-bin.tar.gz
     
   release:
     name: Create draft release with binaries attached when a tag is pushed
