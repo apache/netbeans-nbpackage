@@ -61,7 +61,9 @@ jobs:
           pattern: nbpackage-*
           path: artifacts
       - name: Display structure of downloaded files
-        run: ls -R path/to/artifacts
+        run: ls -R artifacts
+      - name: Display cwd
+        run: cwd
       - uses: softprops/action-gh-release@v2
         with:
           files: artifacts/nbpackage-*
