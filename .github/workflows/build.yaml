@@ -19,9 +19,9 @@ name: NBPackage
 
 on:
   push:
-  pull_request:
-    # unlocked event is used as super secret restart button
-    types: [opened, synchronize, unlocked]
+    # Pattern matched against refs/tags
+    tags:        
+      - '*'           # Push events to every tag not containing /
 
 jobs:
   linux-build:
@@ -46,6 +46,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: binaries
-        path: |
-          target/*-bin.tar.gz
+        name: $GITHUB_REF_NAME-${{ matrix.os }}-${{ matrix.java }}
+        path: target/GITHUB_REF_NAME-bin.tar.gz
