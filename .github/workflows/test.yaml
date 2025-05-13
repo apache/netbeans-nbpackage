@@ -25,6 +25,7 @@ on:
 
 jobs:
   linux-build:
+    if: github.ref_type == 'tag'
     name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
     strategy:
       matrix:
