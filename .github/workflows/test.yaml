@@ -29,11 +29,15 @@ jobs:
     strategy:
       matrix:
         java: [ '17', '24' ]
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        os: [ 'ubuntu-24.04', 'windows-2022', 'macos-14' ]
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
     - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v4
       with:
@@ -43,3 +47,23 @@ jobs:
 
     - name: Build with Maven
       run: ./mvnw --batch-mode --no-transfer-progress clean verify
+
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-24.04' && matrix.java == '24'
+      run : |
+        sudo apt update
+        sudo apt install rpm
+
+    - name: Test packaging
+      if: matrix.java == '24'
+      env:
+          INNOSETUP_PATH: 'C:\\Program Files (x86)\\Inno Setup 6\\iscc.exe'
+      run : java .github/scripts/PackageTest.java
+
+    - name: Upload test package artefacts
+      uses: actions/upload-artifact@v4
+      if: matrix.java == '24'
+      with:
+        name: ${{ matrix.os }}-test
+        path: "target/package-test/output/"
+        retention-days: 1
