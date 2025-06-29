@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -389,11 +390,19 @@ public final class NBPackage {
         return Optional.ofNullable(version);
     }
 
-    // @TODO properly escape and support multi-line comments / values
+    // @TODO properly escape and support multi-line values
     private static void writeOption(StringBuilder sb, Configuration conf, Option<?> option, boolean comment) {
         String value = conf.getValue(option);
+        if (option.status() != Option.Status.NORMAL
+                && (value.isBlank() || Objects.equals(value, option.defaultValue()))) {
+            return;
+        }
         if (comment) {
-            sb.append("# ").append(option.comment()).append(System.lineSeparator());
+            sb.append(System.lineSeparator());
+            if (option.status() == Option.Status.DEPRECATED) {
+                sb.append("# DEPRECATED").append(System.lineSeparator());
+            }
+            option.comment().lines().forEach(l -> sb.append("# ").append(l).append(System.lineSeparator()));
         }
         sb.append(option.key()).append("=").append(value).append(System.lineSeparator());
     }

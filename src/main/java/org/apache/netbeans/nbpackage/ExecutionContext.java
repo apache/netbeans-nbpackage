@@ -26,11 +26,15 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Provide access to configuration, environment and utilities for packager
@@ -166,7 +170,7 @@ public final class ExecutionContext {
             var info = infoHandler();
             var warning = warningHandler();
             executor.submit(() -> {
-                try ( var in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                try (var in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
                     in.lines().forEachOrdered(info);
                 } catch (IOException ex) {
                     warning.accept(ex.getClass().getSimpleName());
@@ -243,7 +247,7 @@ public final class ExecutionContext {
             var info = configuration.infoHandler();
             var warning = configuration.warningHandler();
             executor.submit(() -> {
-                try ( var in = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                try (var in = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
                     in.lines().forEachOrdered(info);
                 } catch (IOException ex) {
                     warning.accept(ex.getClass().getSimpleName());
@@ -407,6 +411,7 @@ public final class ExecutionContext {
                     NBPackage.MESSAGES.getString("message.creatingtask"),
                     packager.name()));
             var task = packager.createTask(this);
+            validateConfiguration();
             if (input != null) {
                 infoHandler().accept(NBPackage.MESSAGES.getString("message.validatingimage"));
                 task.validateCreateImage();
@@ -438,6 +443,26 @@ public final class ExecutionContext {
             executor.shutdown();
             executor.awaitTermination(10, TimeUnit.SECONDS);
         }
+    }
+
+    private void validateConfiguration() {
+        Map<String, Option<?>> options = Stream.concat(NBPackage.globalOptions(),
+                packager.options())
+                .collect(Collectors.toMap(Option::key, Function.identity()));
+        configuration.properties().keySet().stream().sorted().forEach(key -> {
+            Option<?> option = options.get(key);
+            if (option == null) {
+                warningHandler().accept(MessageFormat.format(
+                        NBPackage.MESSAGES.getString("message.unknownoption"),
+                        key, packager.name()
+                ));
+            } else if (option.status() == Option.Status.DEPRECATED) {
+                warningHandler().accept(MessageFormat.format(
+                        NBPackage.MESSAGES.getString("message.deprecatedoption"),
+                        key, packager.name()
+                ));
+            }
+        });
     }
 
     // copied from NetBeans' org.openide.util.BaseUtilities

@@ -21,6 +21,7 @@ package org.apache.netbeans.nbpackage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -32,29 +33,18 @@ import java.util.function.Consumer;
  */
 public final class Configuration {
 
-    private final Properties properties;
+    private final Map<String, String> properties;
     private final boolean verbose;
     private final Consumer<String> infoHandler;
     private final Consumer<String> warningHandler;
 
     private Configuration(Builder builder) {
-        this.properties = new Properties();
-        this.properties.putAll(builder.properties);
+        this.properties = Map.copyOf(builder.properties);
         this.verbose = builder.verbose;
         this.infoHandler = builder.infoHandler;
         this.warningHandler = builder.warningHandler;
     }
 
-//    /**
-//     * Get a value as String from the underlying configuration properties.
-//     *
-//     * @param key configuration key
-//     * @param defaultValue default value
-//     * @return value or default
-//     */
-//    public String getValue(String key, String defaultValue) {
-//        return properties.getProperty(key, defaultValue);
-//    }
     /**
      * Get an option value as String from the underlying configuration
      * properties, or the option default if not set.
@@ -63,7 +53,7 @@ public final class Configuration {
      * @return value or option default
      */
     public String getValue(Option<?> option) {
-        return properties.getProperty(option.key(), option.defaultValue());
+        return properties.getOrDefault(option.key(), option.defaultValue());
     }
 
     /**
@@ -93,6 +83,10 @@ public final class Configuration {
         return warningHandler;
     }
 
+    Map<String, String> properties() {
+        return properties;
+    }
+
     /**
      * Configuration builder.
      *
@@ -107,14 +101,14 @@ public final class Configuration {
      */
     public static class Builder {
 
-        private final Properties properties;
+        private final Map<String, String> properties;
 
         private boolean verbose;
         private Consumer<String> infoHandler;
         private Consumer<String> warningHandler;
 
         private Builder() {
-            properties = new Properties();
+            properties = new HashMap<>();
             warningHandler = s -> System.out.println(s);
             infoHandler = warningHandler;
         }
@@ -130,31 +124,19 @@ public final class Configuration {
          * @throws IOException on problems loading
          */
         public Builder load(Path path) throws IOException {
-            var extraProps = new Properties();
-            var configReplace = Map.of("CONFIG",
-                    path.getParent().toString());
-            try ( var reader = Files.newBufferedReader(path)) {
+            Properties extraProps = new Properties();
+            try (var reader = Files.newBufferedReader(path)) {
                 extraProps.load(reader);
             }
+            Map<String, String> configReplace = Map.of(
+                    "CONFIG", path.getParent().toString());
             extraProps.entrySet().forEach(e -> {
-                e.setValue(StringUtils.replaceTokens(e.getValue().toString(),
-                        configReplace));
+                properties.put(e.getKey().toString(),
+                        StringUtils.replaceTokens(e.getValue().toString(), configReplace));
             });
-            properties.putAll(extraProps);
             return this;
         }
 
-//        /**
-//         * Set a property in the underlying configuration.
-//         *
-//         * @param key property key
-//         * @param value property value
-//         * @return this
-//         */
-//        public Builder set(String key, String value) {
-//            properties.setProperty(key, value);
-//            return this;
-//        }
         /**
          * Set an option in the underlying configuration.
          *
@@ -163,7 +145,7 @@ public final class Configuration {
          * @return this
          */
         public Builder set(Option<?> option, String value) {
-            properties.setProperty(option.key(), value);
+            properties.put(option.key(), value);
             return this;
         }
 

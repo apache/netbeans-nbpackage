@@ -36,13 +36,21 @@ public final class Option<T> {
     private final String defaultValue;
     private final Parser<? extends T> parser;
     private final String comment;
+    private final Status status;
 
-    private Option(String key, Class<T> type, String defaultValue, Parser<? extends T> parser, String comment) {
+    private Option(String key, Class<T> type, String defaultValue,
+            Parser<? extends T> parser, String comment) {
+        this(key, type, defaultValue, parser, comment, Status.NORMAL);
+    }
+
+    private Option(String key, Class<T> type, String defaultValue,
+            Parser<? extends T> parser, String comment, Status status) {
         this.key = Objects.requireNonNull(key);
         this.type = Objects.requireNonNull(type);
         this.defaultValue = Objects.requireNonNull(defaultValue);
         this.parser = Objects.requireNonNull(parser);
         this.comment = Objects.requireNonNull(comment);
+        this.status = Objects.requireNonNull(status);
     }
 
     /**
@@ -95,6 +103,25 @@ public final class Option<T> {
      */
     public String comment() {
         return comment;
+    }
+
+    /**
+     * The status of this option.
+     *
+     * @return status
+     */
+    public Status status() {
+        return status;
+    }
+
+    /**
+     * Create a copy of this option with the provided Status.
+     *
+     * @param status option status
+     * @return copy with required status
+     */
+    public Option<T> withStatus(Status status) {
+        return new Option<>(key, type, defaultValue, parser, comment, status);
     }
 
     /**
@@ -184,6 +211,27 @@ public final class Option<T> {
          * @throws Exception on parsing error
          */
         public T parse(String text) throws Exception;
+
+    }
+
+    /**
+     * The status of an option.
+     */
+    public static enum Status {
+
+        /**
+         * Normal status of an option.
+         */
+        NORMAL,
+        /**
+         * Deprecated status of an option. Will warn on usage and not be
+         * included in template configuration.
+         */
+        DEPRECATED,
+        /**
+         * Advanced option. Will not be included in template configuration.
+         */
+        ADVANCED;
 
     }
 
