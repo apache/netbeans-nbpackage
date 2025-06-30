@@ -30,6 +30,7 @@ import org.apache.netbeans.nbpackage.Template;
  */
 public class PkgPackager implements Packager {
 
+    @SuppressWarnings("removal")
     private static final List<Option<?>> PKG_OPTIONS = List.of(
             MacOS.BUNDLE_ID,
             MacOS.ICON_PATH,

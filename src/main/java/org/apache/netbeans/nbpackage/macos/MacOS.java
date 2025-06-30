@@ -66,9 +66,11 @@ class MacOS {
      * supported values are aarch64, x86_64 and universal. Default attempts to
      * parse from runtime file, if present, or universal.
      */
+    @Deprecated(forRemoval = true)
     static final Option<String> ARCH
             = Option.ofString("package.macos.arch",
-                    MESSAGES.getString("option.arch.help"));
+                    MESSAGES.getString("option.arch.help"))
+                    .withStatus(Option.Status.DEPRECATED);
 
     /**
      * Optional launcher (main.swift) template path.

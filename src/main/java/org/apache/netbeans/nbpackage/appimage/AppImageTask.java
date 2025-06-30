@@ -18,16 +18,13 @@
  */
 package org.apache.netbeans.nbpackage.appimage;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
@@ -72,12 +69,14 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     @Override
+    @SuppressWarnings("removal")
     protected Path buildPackage(Path image) throws Exception {
         Path tool = context().getValue(AppImagePackager.APPIMAGE_TOOL)
                 .orElseThrow(() -> new IllegalStateException(
                 AppImagePackager.MESSAGES.getString("message.noappimagetool")))
                 .toAbsolutePath();
-        String arch = context().getValue(AppImagePackager.APPIMAGE_ARCH)
+        String arch = context().getValue(NBPackage.PACKAGE_ARCH)
+                .or(() -> context().getValue(AppImagePackager.APPIMAGE_ARCH))
                 .orElse(archFromAppImageTool(tool));
         String targetName = image.getFileName().toString();
         if (targetName.endsWith(".AppDir")) {

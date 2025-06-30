@@ -72,6 +72,13 @@ public final class NBPackage {
             "package.runtime", MESSAGES.getString("option.runtime.help"));
 
     /**
+     * Option definition for architecture override. By default, packagers will
+     * attempt to detect from runtime or other configuration.
+     */
+    public static final Option<String> PACKAGE_ARCH = Option.ofString(
+            "package.arch", MESSAGES.getString("option.arch.help"));
+
+    /**
      * Option definition for package publisher.
      */
     public static final Option<String> PACKAGE_PUBLISHER = Option.ofString(
@@ -130,8 +137,8 @@ public final class NBPackage {
 
     private static final List<Option<?>> GLOBAL_OPTIONS
             = List.of(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE, PACKAGE_RUNTIME,
-                    PACKAGE_DESCRIPTION, PACKAGE_PUBLISHER, PACKAGE_URL,
-                    PACKAGE_MERGE, PACKAGE_REMOVE);
+                    PACKAGE_ARCH, PACKAGE_DESCRIPTION, PACKAGE_PUBLISHER,
+                    PACKAGE_URL, PACKAGE_MERGE, PACKAGE_REMOVE);
 
     private NBPackage() {
         // no op

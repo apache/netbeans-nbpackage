@@ -29,7 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
+import org.apache.netbeans.nbpackage.Architecture;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
 import org.apache.netbeans.nbpackage.StringUtils;
@@ -39,6 +41,9 @@ class DebTask extends AbstractPackagerTask {
     private static final String DPKG = "dpkg";
     private static final String DPKG_DEB = "dpkg-deb";
     private static final String FAKEROOT = "fakeroot";
+    private static final String ARCH_ALL = "all";
+    private static final String ARCH_AMD64 = "amd64";
+    private static final String ARCH_ARM64 = "arm64";
 
     private String packageName;
     private String packageVersion;
@@ -46,13 +51,6 @@ class DebTask extends AbstractPackagerTask {
 
     DebTask(ExecutionContext context) {
         super(context);
-    }
-
-    @Override
-    protected void checkImageRequirements() throws Exception {
-        if (context().isImageOnly()) {
-            validateTools(DPKG);
-        }
     }
 
     @Override
@@ -150,15 +148,29 @@ class DebTask extends AbstractPackagerTask {
         return packageVersion;
     }
 
-    private String packageArch() throws Exception {
+    private String packageArch() {
         if (packageArch == null) {
-            if (context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()) {
-                packageArch = context()
-                        .execAndGetOutput(DPKG, "--print-architecture")
-                        .strip();
-            } else {
-                packageArch = "all";
-            }
+            packageArch = context().getValue(NBPackage.PACKAGE_ARCH)
+                    .orElseGet(() -> {
+                        Optional<Path> runtime = context().getValue(NBPackage.PACKAGE_RUNTIME);
+                        if (runtime.isPresent()) {
+                            return Architecture.detectFromPath(
+                                    runtime.get()).map(a -> {
+                                return switch (a) {
+                                    case AARCH64 ->
+                                        ARCH_ARM64;
+                                    case X86_64 ->
+                                        ARCH_AMD64;
+                                };
+                            }).orElseGet(() -> {
+                                context().warningHandler().accept(
+                                        DebPackager.MESSAGES.getString("message.unknownarch"));
+                                return ARCH_ALL;
+                            });
+                        } else {
+                            return ARCH_ALL;
+                        }
+                    });
         }
         return packageArch;
     }
@@ -255,7 +267,7 @@ class DebTask extends AbstractPackagerTask {
         String description = context().getValue(NBPackage.PACKAGE_DESCRIPTION).orElse("");
         String recommends = context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()
                 ? ""
-                : "java11-sdk";
+                : "java17-sdk";
 
         String control = StringUtils.replaceTokens(template, Map.of(
                 "DEB_PACKAGE", packageName(),

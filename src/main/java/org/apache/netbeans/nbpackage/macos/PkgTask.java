@@ -24,15 +24,12 @@ import java.util.List;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.NBPackage;
 
-/**
- *
- */
 class PkgTask extends AppBundleTask {
 
     PkgTask(ExecutionContext context) {
         super(context);
     }
-    
+
     @Override
     protected void checkPackageRequirements() throws Exception {
         super.checkPackageRequirements();
@@ -44,8 +41,12 @@ class PkgTask extends AppBundleTask {
         Path bundle = super.buildPackage(image);
         String name = context().getValue(NBPackage.PACKAGE_NAME).orElseThrow();
         String version = context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow();
-        Path output = context().destination().resolve(
-                sanitize(name) + " " + sanitize(version) + ".pkg");
+        String arch = bundleArch();
+        String outputName = ARCH_UNIVERSAL.equals(arch)
+                ? sanitizeNoWhitespace(name) + "-" + sanitizeNoWhitespace(version) + ".pkg"
+                : sanitizeNoWhitespace(name) + "-" + sanitizeNoWhitespace(version)
+                + "-" + arch + ".pkg";
+        Path output = context().destination().resolve(outputName);
         String signingID = context().getValue(MacOS.PKGBUILD_ID).orElse("");
         List<String> command = new ArrayList<>();
         command.add("pkgbuild");
@@ -55,7 +56,7 @@ class PkgTask extends AppBundleTask {
         command.add(version);
         command.add("--install-location");
         command.add("/Applications");
-        
+
         if (signingID.isBlank()) {
             context().warningHandler().accept(
                     MacOS.MESSAGES.getString("message.nopkgbuildid"));
@@ -63,7 +64,7 @@ class PkgTask extends AppBundleTask {
             command.add("--sign");
             command.add(signingID);
         }
-        
+
         command.add(output.toString());
         int result = context().exec(command);
         if (result != 0) {
@@ -76,6 +77,10 @@ class PkgTask extends AppBundleTask {
     @Override
     protected String calculateImageName(Path input) throws Exception {
         return super.calculateImageName(input) + "-pkg";
+    }
+
+    private String sanitizeNoWhitespace(String text) {
+        return sanitize(text).replaceAll("\\s", "-");
     }
 
 }
