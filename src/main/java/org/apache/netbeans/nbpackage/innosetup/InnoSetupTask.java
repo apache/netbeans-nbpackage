@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
+import org.apache.netbeans.nbpackage.Architecture;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
@@ -38,6 +39,15 @@ class InnoSetupTask extends AbstractPackagerTask {
 
     InnoSetupTask(ExecutionContext context) {
         super(context);
+    }
+
+    @Override
+    protected void checkImageRequirements() throws Exception {
+        context().getValue(NBPackage.PACKAGE_ARCH).ifPresent(arch -> {
+            if (!Architecture.X86_64.isSynonym(arch)) {
+                context().warningHandler().accept(MESSAGES.getString("message.invalidarch"));
+            }
+        });
     }
 
     @Override
@@ -178,6 +188,12 @@ class InnoSetupTask extends AbstractPackagerTask {
         String appNameSafe = sanitize(appName);
         String appID = context().getValue(APPID).orElse(appName);
         String appVersion = context().getValue(NBPackage.PACKAGE_VERSION).orElse("1.0");
+        String appPublisher = context().getValue(NBPackage.PACKAGE_PUBLISHER)
+                .map(pub -> "AppPublisher=" + pub)
+                .orElse("");
+        String appURL = context().getValue(NBPackage.PACKAGE_URL)
+                .map(url -> "AppPublisherURL=" + url)
+                .orElse("");
 
         String appLicense;
         if (Files.exists(image.resolve("license.txt"))) {
@@ -192,15 +208,25 @@ class InnoSetupTask extends AbstractPackagerTask {
                 .map(p -> "Parameters: \"--jdkhome \"\"{app}\\jdk\"\"\";")
                 .orElse("");
 
-        var map = Map.of("APP_ID", appID,
-                "APP_NAME", appName,
-                "APP_NAME_SAFE", appNameSafe,
-                "APP_VERSION", appVersion,
-                "APP_LICENSE", appLicense,
-                "INSTALL_DELETE", installDeleteSection,
-                "FILES", filesSection,
-                "EXEC_NAME", execName,
-                "PARAMETERS", execParam
+        String outputFilename = appNameSafe.replaceAll("\\s", "-") + "-"
+                + sanitize(appVersion).replaceAll("\\s", "-")
+                + context().getValue(NBPackage.PACKAGE_ARCH)
+                        .map(arch -> "-" + sanitize(arch).replaceAll("\\s", ""))
+                        .orElse("");
+
+        Map<String, String> map = Map.ofEntries(
+                Map.entry("APP_ID", appID),
+                Map.entry("APP_NAME", appName),
+                Map.entry("APP_NAME_SAFE", appNameSafe),
+                Map.entry("APP_VERSION", appVersion),
+                Map.entry("APP_PUBLISHER", appPublisher),
+                Map.entry("APP_PUBLISHER_URL", appURL),
+                Map.entry("APP_LICENSE", appLicense),
+                Map.entry("OUTPUT_FILENAME", outputFilename),
+                Map.entry("INSTALL_DELETE", installDeleteSection),
+                Map.entry("FILES", filesSection),
+                Map.entry("EXEC_NAME", execName),
+                Map.entry("PARAMETERS", execParam)
         );
 
         String script = StringUtils.replaceTokens(template, map);
