@@ -22,9 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.CleanupMode;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class AbstractPackagerTaskTest {
 
-    private static Path tmpDir;
+    private static @TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmpDir;
     private static Path input;
     private static Path runtime;
 
@@ -42,29 +43,12 @@ public class AbstractPackagerTaskTest {
 
     @BeforeAll
     public static void setUpClass() throws IOException {
-        tmpDir = Files.createTempDirectory("nbp-task-tests-");
-        Path appRoot = Files.createDirectory(tmpDir.resolve("appDir"));
-        Path appBin = Files.createDirectory(appRoot.resolve("bin"));
-        Path appEtc = Files.createDirectory(appRoot.resolve("etc"));
-        Path platform = Files.createDirectory(appRoot.resolve("platform"));
-        Files.createFile(appBin.resolve("app"));
-        Files.createFile(appEtc.resolve("app.conf"));
-        Files.createFile(platform.resolve("module"));
+        Path appRoot = TestUtils.buildFakeApp(tmpDir, "appDir", "app");
         input = tmpDir.resolve("app.zip");
         FileUtils.createZipArchive(appRoot, input);
-        Path jdkRoot = Files.createDirectory(tmpDir.resolve("jdkDir"));
-        Path jdkBin = Files.createDirectory(jdkRoot.resolve("bin"));
-        Files.createFile(jdkBin.resolve("java"));
+        Path jdkRoot = TestUtils.buildFakeJDK(tmpDir, "jdkDir", false);
         runtime = tmpDir.resolve("runtime.zip");
         FileUtils.createZipArchive(jdkRoot, runtime);
-    }
-
-    @AfterAll
-    public static void tearDownClass() throws IOException {
-        if (tmpDir != null) {
-            FileUtils.deleteFiles(tmpDir);
-            tmpDir = null;
-        }
     }
 
     /**

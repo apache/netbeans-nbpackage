@@ -54,13 +54,6 @@ class RpmTask extends AbstractPackagerTask {
     }
 
     @Override
-    protected void checkImageRequirements() throws Exception {
-        if (context().isImageOnly()) {
-            validateTools(RPM);
-        }
-    }
-
-    @Override
     protected void checkPackageRequirements() throws Exception {
         validateTools(RPM, RPMBUILD);
     }
@@ -234,7 +227,11 @@ class RpmTask extends AbstractPackagerTask {
                 Map.of("PACKAGE", packageLocation, "EXEC", execName));
         Path bin = binDir.resolve(execName);
         Files.writeString(bin, script, StandardOpenOption.CREATE_NEW);
-        Files.setPosixFilePermissions(bin, PosixFilePermissions.fromString("rwxr-xr-x"));
+        try {
+            Files.setPosixFilePermissions(bin, PosixFilePermissions.fromString("rwxr-xr-x"));
+        } catch (UnsupportedOperationException ex) {
+            context().warningHandler().accept("UnsupportedOperationException : PosixFilePermissions");
+        }
     }
 
     private void setupIcons(Path share, String pkgName) throws IOException {
