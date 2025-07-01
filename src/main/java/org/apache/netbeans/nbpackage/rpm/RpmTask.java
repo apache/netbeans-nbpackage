@@ -28,8 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
+import org.apache.netbeans.nbpackage.Architecture;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
@@ -39,6 +41,9 @@ class RpmTask extends AbstractPackagerTask {
 
     private static final String RPM = "rpm";
     private static final String RPMBUILD = "rpmbuild";
+    private static final String ARCH_AARCH64 = "aarch64";
+    private static final String ARCH_NOARCH = "noarch";
+    private static final String ARCH_X86_64 = "x86_64";
 
     private String packageName;
     private String packageVersion;
@@ -178,15 +183,29 @@ class RpmTask extends AbstractPackagerTask {
         return packageVersion;
     }
 
-    private String packageArch() throws Exception {
+    private String packageArch() {
         if (packageArch == null) {
-            if (context().getValue(NBPackage.PACKAGE_RUNTIME).isPresent()) {
-                packageArch = context()
-                        .execAndGetOutput(RPM, "--eval", "%{_arch}")
-                        .strip();
-            } else {
-                packageArch = "noarch";
-            }
+            packageArch = context().getValue(NBPackage.PACKAGE_ARCH)
+                    .orElseGet(() -> {
+                        Optional<Path> runtime = context().getValue(NBPackage.PACKAGE_RUNTIME);
+                        if (runtime.isPresent()) {
+                            return Architecture.detectFromPath(
+                                    runtime.get()).map(a -> {
+                                return switch (a) {
+                                    case AARCH64 ->
+                                        ARCH_AARCH64;
+                                    case X86_64 ->
+                                        ARCH_X86_64;
+                                };
+                            }).orElseGet(() -> {
+                                context().warningHandler().accept(
+                                        RpmPackager.MESSAGES.getString("message.unknownarch"));
+                                return ARCH_NOARCH;
+                            });
+                        } else {
+                            return ARCH_NOARCH;
+                        }
+                    });
         }
         return packageArch;
     }
@@ -301,7 +320,7 @@ class RpmTask extends AbstractPackagerTask {
                         .orElse("")),
                 Map.entry("RPM_RECOMMENDS_LINE", context().getValue(NBPackage.PACKAGE_RUNTIME)
                         .map(value -> "")
-                        .orElse("Recommends: java-devel >= 11")),
+                        .orElse("Recommends: java-devel >= 17")),
                 Map.entry("RPM_DESCRIPTION", context().getValue(NBPackage.PACKAGE_DESCRIPTION)
                         .orElse("")),
                 Map.entry("RPM_FILES", fileList)

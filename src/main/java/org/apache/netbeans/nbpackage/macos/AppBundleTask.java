@@ -26,10 +26,11 @@ import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.netbeans.nbpackage.AbstractPackagerTask;
+import org.apache.netbeans.nbpackage.Architecture;
 import org.apache.netbeans.nbpackage.ExecutionContext;
 import org.apache.netbeans.nbpackage.FileUtils;
 import org.apache.netbeans.nbpackage.NBPackage;
@@ -40,16 +41,18 @@ import org.apache.netbeans.nbpackage.StringUtils;
  */
 class AppBundleTask extends AbstractPackagerTask {
 
+    static final String ARCH_X86_64 = "x86_64";
+    static final String ARCH_ARM64 = "arm64";
+    static final String ARCH_UNIVERSAL = "universal";
+
     private static final String DEFAULT_JAR_INTERNAL_BIN_GLOB = "**/*.{dylib,jnilib}";
     private static final String NATIVE_BIN_FILENAME = "nativeBinaries";
     private static final String JAR_BIN_FILENAME = "jarBinaries";
     private static final String ENTITLEMENTS_FILENAME = "sandbox.plist";
     private static final String LAUNCHER_SRC_DIRNAME = "macos-launcher-src";
-    private static final String ARCH_X86_64 = "x86_64";
-    private static final String ARCH_ARM64 = "arm64";
-    private static final String ARCH_UNIVERSAL = "universal";
 
     private String bundleName;
+    private String bundleArch;
 
     AppBundleTask(ExecutionContext context) {
         super(context);
@@ -68,7 +71,7 @@ class AppBundleTask extends AbstractPackagerTask {
 
     @Override
     protected void customizeImage(Path image) throws Exception {
-        Path bundle = image.resolve(getBundleName() + ".app");
+        Path bundle = image.resolve(bundleName() + ".app");
         Path contents = bundle.resolve("Contents");
         Path resources = contents.resolve("Resources");
 
@@ -84,13 +87,13 @@ class AppBundleTask extends AbstractPackagerTask {
 
     @Override
     protected void finalizeImage(Path image) throws Exception {
-        Path bundle = image.resolve(getBundleName() + ".app");
+        Path bundle = image.resolve(bundleName() + ".app");
         setupSigningConfiguration(image, bundle);
     }
 
     @Override
     protected Path buildPackage(Path image) throws Exception {
-        Path bundle = image.resolve(getBundleName() + ".app");
+        Path bundle = image.resolve(bundleName() + ".app");
 
         String execName = FileUtils.find(bundle, "Contents/Resources/*/bin/*")
                 .stream()
@@ -98,7 +101,7 @@ class AppBundleTask extends AbstractPackagerTask {
                 .findFirst()
                 .map(path -> path.getFileName().toString())
                 .orElseThrow();
-        String arch = findArch();
+        String arch = bundleArch();
         Path launcher = compileLauncher(image.resolve(LAUNCHER_SRC_DIRNAME), arch);
         Files.copy(launcher, bundle.resolve("Contents")
                 .resolve("MacOS").resolve(execName),
@@ -119,12 +122,17 @@ class AppBundleTask extends AbstractPackagerTask {
 
     @Override
     protected String calculateImageName(Path input) throws Exception {
-        return super.calculateImageName(input) + "-macOS-app";
+        String arch = bundleArch();
+        if (ARCH_UNIVERSAL.equals(arch)) {
+            return super.calculateImageName(input) + "-macOS-app";
+        } else {
+            return super.calculateImageName(input) + "-macOS-" + arch + "-app";
+        }
     }
 
     @Override
     protected Path calculateAppPath(Path image) throws Exception {
-        return image.resolve(getBundleName() + ".app")
+        return image.resolve(bundleName() + ".app")
                 .resolve("Contents")
                 .resolve("Resources")
                 .resolve("APPDIR");
@@ -132,25 +140,67 @@ class AppBundleTask extends AbstractPackagerTask {
 
     @Override
     protected Path calculateRuntimePath(Path image, Path application) throws Exception {
-        return image.resolve(getBundleName() + ".app")
+        return image.resolve(bundleName() + ".app")
                 .resolve("Contents")
                 .resolve("Home");
     }
 
     @Override
     protected Path calculateRootPath(Path image) throws Exception {
-        return image.resolve(getBundleName() + ".app");
+        return image.resolve(bundleName() + ".app");
     }
 
-    String getBundleName() {
+    String bundleName() {
         if (bundleName == null) {
-            var name = sanitize(context().getValue(NBPackage.PACKAGE_NAME).orElseThrow());
+            String name = sanitize(context().getValue(NBPackage.PACKAGE_NAME).orElseThrow());
             if (name.length() > 15) {
                 name = name.substring(0, 16);
             }
             bundleName = name;
         }
         return bundleName;
+    }
+
+    @SuppressWarnings("removal")
+    String bundleArch() {
+        if (bundleArch == null) {
+            bundleArch = context().getValue(NBPackage.PACKAGE_ARCH)
+                    .or(() -> context().getValue(MacOS.ARCH))
+                    .map(arch -> {
+                        if (Architecture.X86_64.isSynonym(arch)) {
+                            return ARCH_X86_64;
+                        } else if (Architecture.AARCH64.isSynonym(arch)) {
+                            return ARCH_ARM64;
+                        } else {
+                            if (!arch.equalsIgnoreCase(ARCH_UNIVERSAL)) {
+                                context().warningHandler().accept(
+                                        MacOS.MESSAGES.getString("message.unknownarch"));
+                            }
+                            return ARCH_UNIVERSAL;
+                        }
+                    })
+                    .orElseGet(() -> {
+                        Optional<Path> runtime = context().getValue(NBPackage.PACKAGE_RUNTIME);
+                        if (runtime.isPresent()) {
+                            return Architecture.detectFromPath(
+                                    runtime.get()).map(a -> {
+                                return switch (a) {
+                                    case AARCH64 ->
+                                        ARCH_ARM64;
+                                    case X86_64 ->
+                                        ARCH_X86_64;
+                                };
+                            }).orElseGet(() -> {
+                                context().warningHandler().accept(
+                                        MacOS.MESSAGES.getString("message.unknownarch"));
+                                return ARCH_UNIVERSAL;
+                            });
+                        } else {
+                            return ARCH_UNIVERSAL;
+                        }
+                    });
+        }
+        return bundleArch;
     }
 
     void validateTools(String... tools) throws Exception {
@@ -197,13 +247,13 @@ class AppBundleTask extends AbstractPackagerTask {
     private void setupInfo(Path contents, String execName) throws IOException {
         String template = MacOS.INFO_TEMPLATE.load(context());
 
-        var tokenMap = Map.of(
-                "BUNDLE_NAME", getBundleName(),
+        Map<String, String> tokenMap = Map.of(
+                "BUNDLE_NAME", bundleName(),
                 "BUNDLE_DISPLAY", context().getValue(NBPackage.PACKAGE_NAME).orElseThrow(),
                 "BUNDLE_VERSION", context().getValue(NBPackage.PACKAGE_VERSION).orElseThrow(),
                 "BUNDLE_EXEC", execName,
                 "BUNDLE_ID", context().getValue(MacOS.BUNDLE_ID)
-                        .orElse(sanitizeBundleID(getBundleName())),
+                        .orElse(sanitizeBundleID(bundleName())),
                 "BUNDLE_ICON", execName + ".icns"
         );
 
@@ -232,8 +282,8 @@ class AppBundleTask extends AbstractPackagerTask {
     private void setupSigningConfiguration(Path image, Path bundle) throws IOException {
         Files.writeString(image.resolve(ENTITLEMENTS_FILENAME),
                 MacOS.ENTITLEMENTS_TEMPLATE.load(context()),
-                 StandardOpenOption.CREATE_NEW);
-        var nativeBinaries = FileUtils.find(bundle,
+                StandardOpenOption.CREATE_NEW);
+        List<Path> nativeBinaries = FileUtils.find(bundle,
                 context().getValue(MacOS.SIGNING_FILES).orElseThrow());
         Files.writeString(image.resolve(NATIVE_BIN_FILENAME),
                 nativeBinaries.stream()
@@ -241,7 +291,7 @@ class AppBundleTask extends AbstractPackagerTask {
                         .map(Path::toString)
                         .collect(Collectors.joining("\n", "", "\n")),
                 StandardOpenOption.CREATE_NEW);
-        var jarBinaries = FileUtils.find(bundle,
+        List<Path> jarBinaries = FileUtils.find(bundle,
                 context().getValue(MacOS.SIGNING_JARS).orElseThrow());
         Files.writeString(image.resolve(JAR_BIN_FILENAME),
                 jarBinaries.stream()
@@ -253,23 +303,21 @@ class AppBundleTask extends AbstractPackagerTask {
 
     private Path compileLauncher(Path launcherProject, String arch) throws IOException, InterruptedException {
         final ProcessBuilder pb;
-        switch (arch) {
-            case ARCH_X86_64:
-                pb = new ProcessBuilder("swift", "build",
-                        "--configuration", "release",
-                        "--arch", "x86_64");
-                break;
-            case ARCH_ARM64:
-                pb = new ProcessBuilder("swift", "build",
-                        "--configuration", "release",
-                        "--arch", "arm64");
-                break;
-            default:
-                pb = new ProcessBuilder("swift", "build",
-                        "--configuration", "release",
-                        "--arch", "arm64",
-                        "--arch", "x86_64");
-        }
+        pb = switch (arch) {
+            case ARCH_X86_64 ->
+                new ProcessBuilder("swift", "build",
+                "--configuration", "release",
+                "--arch", "x86_64");
+            case ARCH_ARM64 ->
+                new ProcessBuilder("swift", "build",
+                "--configuration", "release",
+                "--arch", "arm64");
+            default ->
+                new ProcessBuilder("swift", "build",
+                "--configuration", "release",
+                "--arch", "arm64",
+                "--arch", "x86_64");
+        };
         pb.directory(launcherProject.toFile());
         context().exec(pb);
         var output = FileUtils.find(launcherProject.resolve(".build"), "**/{R,r}elease/AppLauncher");
@@ -277,29 +325,6 @@ class AppBundleTask extends AbstractPackagerTask {
             throw new IOException(launcherProject.toString());
         }
         return output.get(0);
-    }
-
-    private String findArch() {
-        var arch = context().getValue(MacOS.ARCH).orElse("").toLowerCase(Locale.ROOT);
-        if (arch.isBlank()) {
-            var runtimeName = context().getValue(NBPackage.PACKAGE_RUNTIME)
-                    .map(path -> path.getFileName().toString().toLowerCase(Locale.ROOT))
-                    .orElse("");
-            if (runtimeName.isBlank()) {
-                return ARCH_UNIVERSAL;
-            }
-            if (runtimeName.contains(ARCH_X86_64) || runtimeName.contains("x64")) {
-                return ARCH_X86_64;
-            }
-            if (runtimeName.contains(ARCH_ARM64) || runtimeName.contains("aarch64")) {
-                return ARCH_ARM64;
-            }
-        } else if (ARCH_ARM64.equals(arch) || ARCH_X86_64.equals(arch)
-                || ARCH_UNIVERSAL.equals(arch)) {
-            return arch;
-        }
-        context().warningHandler().accept(MacOS.MESSAGES.getString("message.unknownarch"));
-        return ARCH_UNIVERSAL;
     }
 
     private void signBinariesInJARs(Path image, Path entitlements, String id)

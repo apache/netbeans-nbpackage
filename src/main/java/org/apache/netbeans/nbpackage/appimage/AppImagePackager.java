@@ -61,9 +61,11 @@ public class AppImagePackager implements Packager {
      * Architecture of AppImage to create. Defaults to parsing from appimagetool
      * file name.
      */
+    @Deprecated(forRemoval = true)
     static final Option<String> APPIMAGE_ARCH
             = Option.ofString("package.appimage.arch",
-                    MESSAGES.getString("option.arch.help"));
+                    MESSAGES.getString("option.arch.help"))
+                    .withStatus(Option.Status.DEPRECATED);
     
     /**
      * Optional path to custom .desktop template.

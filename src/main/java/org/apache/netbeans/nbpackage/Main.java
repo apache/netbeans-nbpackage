@@ -93,14 +93,14 @@ public class Main {
         public Integer call() throws Exception {
             try {
                 if (input == null && inputImage == null && !hasAuxTasks()) {
-                    warning(NBPackage.MESSAGES.getString("message.notasks"));
+                    error(NBPackage.MESSAGES.getString("message.notasks"));
                     return 1;
                 }
                 if (input != null && inputImage != null) {
-                    warning(NBPackage.MESSAGES.getString("message.inputandimage"));
+                    error(NBPackage.MESSAGES.getString("message.inputandimage"));
                     return 2;
                 }
-                var cb = Configuration.builder();
+                Configuration.Builder cb = Configuration.builder();
                 if (config != null) {
                     cb.load(config.toAbsolutePath());
                 }
@@ -122,7 +122,9 @@ public class Main {
                     cb.verbose();
                 }
 
-                var conf = cb.build();
+                cb.messageHandlers(this::warning, this::info);
+
+                Configuration conf = cb.build();
 
                 if (configOut != null) {
                     NBPackage.writeFullConfiguration(conf, configOut);
@@ -146,13 +148,13 @@ public class Main {
                 }
                 return 0;
             } catch (Exception ex) {
-                warning(ex.getClass().getSimpleName());
-                warning(ex.getLocalizedMessage());
+                error(ex.getClass().getSimpleName());
+                error(ex.getLocalizedMessage());
                 if (verbose) {
                     var sw = new StringWriter();
                     var pw = new PrintWriter(sw);
                     ex.printStackTrace(pw);
-                    warning(sw.toString());
+                    error(sw.toString());
                 }
                 return 3;
             }
@@ -163,6 +165,13 @@ public class Main {
         }
 
         private void warning(String msg) {
+            var ansiMsg = CommandLine.Help.Ansi.AUTO.string(
+                    "@|bold " + msg + "|@"
+            );
+            System.out.println(ansiMsg);
+        }
+
+        private void error(String msg) {
             var ansiMsg = CommandLine.Help.Ansi.AUTO.string(
                     "@|bold,red " + msg + "|@"
             );
