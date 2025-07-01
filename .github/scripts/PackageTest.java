@@ -155,7 +155,7 @@ public final class PackageTest {
         cmd.add("--input");
         cmd.add(input.toString());
         cmd.add("-Pname=NetBeans RCP");
-        cmd.add("-Pversion=12.3~rc4");
+        cmd.add("-Pversion=12.3-rc4");
         cmd.add("-Pruntime=" + runtime.toString());
         if ("windows-innosetup".equals(type)) {
             cmd.add("-Pinnosetup.tool=" + System.getenv("INNOSETUP_PATH"));
