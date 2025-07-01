@@ -182,7 +182,7 @@ class DebTask extends AbstractPackagerTask {
 
     private String sanitizeVersion(String text) {
         return text.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9\\+\\-\\.\\~]", "-");
+                .replaceAll("[^a-z0-9\\+\\.\\~]", "~");
     }
 
     private Path findLauncher(Path binDir) throws IOException {
