@@ -199,7 +199,11 @@ class DebTask extends AbstractPackagerTask {
                 Map.of("PACKAGE", packageLocation, "EXEC", execName));
         Path bin = binDir.resolve(execName);
         Files.writeString(bin, script, StandardOpenOption.CREATE_NEW);
-        Files.setPosixFilePermissions(bin, PosixFilePermissions.fromString("rwxr-xr-x"));
+        try {
+            Files.setPosixFilePermissions(bin, PosixFilePermissions.fromString("rwxr-xr-x"));
+        } catch (UnsupportedOperationException ex) {
+            context().warningHandler().accept("UnsupportedOperationException : PosixFilePermissions");
+        }
     }
 
     private void setupIcons(Path share, String pkgName) throws IOException {
