@@ -45,7 +45,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -149,7 +148,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
      */
     private static void extractGenericArchive(InputStream inputStream, Path extractToDirectory)
             throws ArchiveException, IOException {
-        final ArchiveInputStream archiveInputStream = new ArchiveStreamFactory().createArchiveInputStream(inputStream);
+        final ArchiveInputStream<?> archiveInputStream = new ArchiveStreamFactory().createArchiveInputStream(inputStream);
 
         ArchiveEntry entry;
         while ((entry = archiveInputStream.getNextEntry()) != null) {
@@ -182,7 +181,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
         final TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(inputStream);
 
         TarArchiveEntry entry;
-        while ((entry = archiveInputStream.getNextTarEntry()) != null) {
+        while ((entry = archiveInputStream.getNextEntry()) != null) {
             if (!archiveInputStream.canReadEntryData(entry)) {
                 LOG.log(System.Logger.Level.ERROR, "Failed to read archive entry " + entry);
                 continue;
@@ -191,11 +190,11 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
             Path entryExtractPath = extractToDirectory.resolve(getEntryAsPath(entry));
 
             if (entry.isLink()) {
-                Path linkTarget = Paths.get(entry.getLinkName());
+                Path linkTarget = Path.of(entry.getLinkName());
                 Files.deleteIfExists(entryExtractPath);
                 Files.createLink(entryExtractPath, linkTarget);
             } else if (entry.isSymbolicLink()) {
-                Path linkTarget = Paths.get(entry.getLinkName());
+                Path linkTarget = Path.of(entry.getLinkName());
                 Files.deleteIfExists(entryExtractPath);
                 Files.createSymbolicLink(entryExtractPath, linkTarget);
             } else {
@@ -312,7 +311,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
         final JarArchiveInputStream archiveInputStream = new JarArchiveInputStream(inputStream);
 
         JarArchiveEntry entry;
-        while ((entry = archiveInputStream.getNextJarEntry()) != null) {
+        while ((entry = archiveInputStream.getNextEntry()) != null) {
             if (!archiveInputStream.canReadEntryData(entry)) {
                 LOG.log(System.Logger.Level.ERROR, "Failed to read archive entry " + entry);
                 continue;
@@ -338,7 +337,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
         if (entry.isUnixSymlink()) {
             final byte[] contentBuffer = new byte[8192];
             final int contentLength = IOUtils.readFully(archiveInputStream, contentBuffer);
-            Path linkTarget = Paths.get(new String(contentBuffer, 0, contentLength, StandardCharsets.UTF_8));
+            Path linkTarget = Path.of(new String(contentBuffer, 0, contentLength, StandardCharsets.UTF_8));
             Files.deleteIfExists(entryExtractPath);
             Files.createSymbolicLink(entryExtractPath, linkTarget);
         } else {
@@ -364,7 +363,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
     }
 
     private static Path getEntryAsPath(ArchiveEntry entry) throws IOException {
-        Path entryAsPath = Paths.get(entry.getName());
+        Path entryAsPath = Path.of(entry.getName());
         if (entryAsPath.isAbsolute()) {
             throw new IOException("Archive contained an absolute path as an entry");
         }
@@ -381,7 +380,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
      * @throws IOException if an IO error occurs
      */
     private static void extractZipArchive(Path archivePath, Path extractToDirectory) throws IOException {
-        try (final ZipFile zipFile = new ZipFile(archivePath.toFile())) {
+        try (final ZipFile zipFile = ZipFile.builder().setPath(archivePath).get()) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry entry = entries.nextElement();
@@ -401,10 +400,10 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
      * @throws IOException if an IO error occurs
      * @throws ArchiveException if an archive error occurs
      */
-    public static void createArchive(ArchiveType archiveType, Path directoryToArchive, Path archiveFile)
+    public static <E extends ArchiveEntry> void createArchive(ArchiveType archiveType, Path directoryToArchive, Path archiveFile)
             throws IOException, ArchiveException {
         try (OutputStream fileOutputStream = new BufferedOutputStream(Files.newOutputStream(archiveFile));
-                ArchiveOutputStream archiveOutputStream = new ArchiveStreamFactory()
+                ArchiveOutputStream<E> archiveOutputStream = new ArchiveStreamFactory()
                         .createArchiveOutputStream(archiveType.getCommonsCompressName(), fileOutputStream)) {
 
             if (archiveType == ArchiveType.TAR) {
@@ -423,7 +422,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
                         return FileVisitResult.CONTINUE;
                     }
 
-                    ArchiveEntry entry = archiveOutputStream.createArchiveEntry(dir.toFile(), getRelativePathString(dir, directoryToArchive));
+                    E entry = archiveOutputStream.createArchiveEntry(dir.toFile(), getRelativePathString(dir, directoryToArchive));
                     archiveOutputStream.putArchiveEntry(entry);
                     archiveOutputStream.closeArchiveEntry();
                     return FileVisitResult.CONTINUE;
@@ -434,7 +433,8 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
         }
     }
 
-    private static void createAndPutArchiveEntry(ArchiveType archiveType, ArchiveOutputStream archiveOutputStream,
+    @SuppressWarnings("unchecked")
+    private static void createAndPutArchiveEntry(ArchiveType archiveType, ArchiveOutputStream<? extends ArchiveEntry> archiveOutputStream,
             Path directoryToArchive, Path filePathToArchive) throws IOException {
         switch (archiveType) {
             case ZIP: {
@@ -444,7 +444,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
                 if (isSymbolicLink) {
                     entry.setUnixMode(entry.getUnixMode() | ZIP_LINK_FLAG);
                 }
-                archiveOutputStream.putArchiveEntry(entry);
+                ((ArchiveOutputStream<ZipArchiveEntry>) archiveOutputStream).putArchiveEntry(entry);
                 if (isSymbolicLink) {
                     String linkData = Files.readSymbolicLink(filePathToArchive).toString().replaceAll("\\\\", "/");
                     archiveOutputStream.write(linkData.getBytes(StandardCharsets.UTF_8));
@@ -466,7 +466,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
                 }
 
                 entry.setMode(getUnixMode(filePathToArchive));
-                archiveOutputStream.putArchiveEntry(entry);
+                ((ArchiveOutputStream<TarArchiveEntry>) archiveOutputStream).putArchiveEntry(entry);
 
                 if (!isSymbolicLink) {
                     Files.copy(filePathToArchive, archiveOutputStream);

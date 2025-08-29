@@ -178,7 +178,7 @@ class InnoSetupTask extends AbstractPackagerTask {
 
         List<Path> files;
         try (var l = Files.list(image.resolve(execName))) {
-            files = l.sorted().collect(Collectors.toList());
+            files = l.sorted().toList();
         }
 
         String installDeleteSection = buildInstallDeleteSection(files);

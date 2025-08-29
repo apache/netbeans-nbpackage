@@ -98,6 +98,11 @@ under the License.
         <version>3.14.0</version>
         <configuration>
           <release>17</release>
+          <compilerArgs>
+            <arg>-Xlint</arg>
+            <!-- tests have no module-info -->
+            <arg>-Xlint:-exports</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
