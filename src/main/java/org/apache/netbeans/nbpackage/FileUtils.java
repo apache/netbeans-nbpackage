@@ -34,7 +34,6 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -222,7 +221,7 @@ public class FileUtils {
                         (matcher.matches(searchDir.relativize(file)) ||
                                 matcher.matches(file.getFileName()))
         )) {
-            return stream.collect(Collectors.toList());
+            return stream.toList();
         }
     }
 
@@ -248,7 +247,7 @@ public class FileUtils {
     public static List<Path> findDirs(Path searchDir, int searchDepth, String... patterns) throws IOException {
         var matchers = Stream.of(patterns)
                 .map(p -> FileSystems.getDefault().getPathMatcher("glob:" + p))
-                .collect(Collectors.toList());
+                .toList();
         var intDepth = Stream.of(patterns)
                 .map(p -> p.split("/"))
                 .mapToInt(ps -> ps.length)
@@ -263,7 +262,7 @@ public class FileUtils {
                 }
             }).allMatch(v -> v);
         })) {
-            return List.copyOf(stream.collect(Collectors.toList()));
+            return stream.toList();
         }
     }
 
@@ -291,7 +290,7 @@ public class FileUtils {
                 filesToProcess = jarStream
                         .filter(file -> Files.isRegularFile(file))
                         .filter(matcher::matches)
-                        .collect(Collectors.toList());
+                        .toList();
             }
             if (filesToProcess.isEmpty()) {
                 return false;

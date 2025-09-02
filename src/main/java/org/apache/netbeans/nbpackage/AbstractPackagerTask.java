@@ -393,7 +393,7 @@ public abstract class AbstractPackagerTask implements Packager.Task {
         String messageDir = context().isVerbose()
                 ? NBPackage.MESSAGES.getString("message.mergingdir") : null;
         try (var stream = Files.list(sourceDir)) {
-            var files = stream.sorted().collect(Collectors.toList());
+            var files = stream.sorted().toList();
             for (Path file : files) {
                 if (Files.isDirectory(file)) {
                     String name = file.getFileName().toString();

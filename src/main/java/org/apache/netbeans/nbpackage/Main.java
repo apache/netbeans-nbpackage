@@ -32,6 +32,8 @@ import picocli.CommandLine;
  */
 public class Main {
 
+    private Main() {}
+
     /**
      * Main entry point for command line usage.
      *

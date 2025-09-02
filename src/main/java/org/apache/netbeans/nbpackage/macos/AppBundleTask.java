@@ -337,7 +337,7 @@ class AppBundleTask extends AbstractPackagerTask {
                 .filter(l -> !l.isBlank())
                 .map(Path::of)
                 .map(image::resolve)
-                .collect(Collectors.toList());
+                .toList();
         for (Path jar : jars) {
             FileUtils.processJarContents(jar,
                     DEFAULT_JAR_INTERNAL_BIN_GLOB,
@@ -359,7 +359,7 @@ class AppBundleTask extends AbstractPackagerTask {
                 .filter(l -> !l.isBlank())
                 .map(Path::of)
                 .map(image::resolve)
-                .collect(Collectors.toList());
+                .toList();
         for (Path file : files) {
             codesign(file, entitlements, id);
         }
