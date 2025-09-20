@@ -33,6 +33,7 @@ import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -41,12 +42,14 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -77,7 +80,7 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
     public static final int OTHERS_READ_BIT_MASK = 00004;
     public static final int OTHERS_WRITE_BIT_MASK = 00002;
     public static final int OTHERS_EXECUTE_BIT_MASK = 00001;
-    
+
     private static final System.Logger LOG = System.getLogger(ArchiveUtils.class.getName());
 
     /**
@@ -433,6 +436,50 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
         }
     }
 
+    /**
+     * Creates a tar file embedded in a shell script from the contents in {@code directoryToArchive}.
+     *
+     * @param directoryToArchive the directory to archive the contents of
+     * @param archiveFile the file to write the archive to
+     * @throws IOException if an IO error occurs
+     * @throws ArchiveException if an archive error occurs
+     */
+    public static void createEmbeddedTarScript(String shellScript, Path directoryToArchive, Path archiveFile)
+            throws IOException, ArchiveException {
+
+        try (OutputStream fileOutputStream = new BufferedOutputStream(Files.newOutputStream(archiveFile))) {
+            fileOutputStream.write(shellScript.getBytes(Charset.forName("UTF-8")));
+        }
+
+        try (OutputStream fileOutputStream = new BufferedOutputStream(Files.newOutputStream(archiveFile, StandardOpenOption.APPEND));
+                TarArchiveOutputStream archiveOutputStream = new ArchiveStreamFactory()
+                        .createArchiveOutputStream(ArchiveStreamFactory.TAR, fileOutputStream)) {
+
+            archiveOutputStream.setLongFileMode(LONGFILE_GNU);
+
+            Files.walkFileTree(directoryToArchive, new SimpleFileVisitor<Path>() {
+                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    createAndPutArchiveEntry(ArchiveType.TAR, archiveOutputStream, directoryToArchive, file);
+                    archiveOutputStream.closeArchiveEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (Files.isSameFile(dir, directoryToArchive)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    TarArchiveEntry entry = archiveOutputStream.createArchiveEntry(dir.toFile(), getRelativePathString(dir, directoryToArchive));
+                    archiveOutputStream.putArchiveEntry(entry);
+                    archiveOutputStream.closeArchiveEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            archiveOutputStream.finish();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private static void createAndPutArchiveEntry(ArchiveType archiveType, ArchiveOutputStream<? extends ArchiveEntry> archiveOutputStream,
             Path directoryToArchive, Path filePathToArchive) throws IOException {
@@ -459,12 +506,11 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
                 if (isSymbolicLink) {
                     entry = new TarArchiveEntry(getRelativePathString(filePathToArchive, directoryToArchive), TarConstants.LF_SYMLINK);
                     entry.setLinkName(getRelativePathString(
-                            filePathToArchive.resolve(Files.readSymbolicLink(filePathToArchive)), 
+                            filePathToArchive.resolve(Files.readSymbolicLink(filePathToArchive)),
                             directoryToArchive));
                 } else {
                     entry = new TarArchiveEntry(filePathToArchive.toFile(), getRelativePathString(filePathToArchive, directoryToArchive));
                 }
-
                 entry.setMode(getUnixMode(filePathToArchive));
                 ((ArchiveOutputStream<TarArchiveEntry>) archiveOutputStream).putArchiveEntry(entry);
 

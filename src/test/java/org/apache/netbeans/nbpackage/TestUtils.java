@@ -18,9 +18,12 @@
  */
 package org.apache.netbeans.nbpackage;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 /**
  * Utility methods for tests.
@@ -94,6 +97,23 @@ public class TestUtils {
     }
 
     /**
+     * Build an package using the provided packager and configuration.
+     *
+     * @param packager packager to use
+     * @param input input application
+     * @param config configuration
+     * @param destination output directory
+     * @return path to created package
+     * @throws Exception
+     */
+    public static Path buildPackage(Packager packager, Path input,
+            Configuration config, Path destination) throws Exception {
+        ExecutionContext exec = new ExecutionContext(
+                packager, input, config, destination, false);
+        return exec.execute();
+    }
+
+    /**
      * Utility to resolve paths.
      *
      * @param path root path
@@ -108,4 +128,30 @@ public class TestUtils {
         return result;
     }
 
+
+    /**
+     * Utility to read file until regex pattern matches.
+     *
+     * @param path file path
+     * @param regex the regex pattern
+     * @return String read from file
+     * @throws java.io.IOException
+     */
+    public static String readFileToString(Path path, String regex)
+            throws IOException {
+        StringBuilder result = new StringBuilder();
+        Pattern match = Pattern.compile(regex);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+                if (match.matcher(line).matches()) {
+                    break;
+                }
+            }
+        }
+
+        return result.toString();
+    }
 }
