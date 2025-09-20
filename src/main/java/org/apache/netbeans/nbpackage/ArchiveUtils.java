@@ -41,6 +41,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -423,6 +424,48 @@ import static org.apache.commons.compress.archivers.tar.TarArchiveOutputStream.L
                     }
 
                     E entry = archiveOutputStream.createArchiveEntry(dir.toFile(), getRelativePathString(dir, directoryToArchive));
+                    archiveOutputStream.putArchiveEntry(entry);
+                    archiveOutputStream.closeArchiveEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            archiveOutputStream.finish();
+        }
+    }
+
+    /**
+     * Creates a tar file embedded in a shell script from the contents in {@code directoryToArchive}.
+     *
+     * @param directoryToArchive the directory to archive the contents of
+     * @param archiveFile the file to write the archive to
+     * @throws IOException if an IO error occurs
+     * @throws ArchiveException if an archive error occurs
+     */
+    public static void createEmbeddedTarScript(String shellScript, Path directoryToArchive, Path archiveFile)
+            throws IOException, ArchiveException {
+        try (OutputStream fileOutputStream = new BufferedOutputStream(Files.newOutputStream(archiveFile));
+                TarArchiveOutputStream archiveOutputStream = new ArchiveStreamFactory()
+                        .createArchiveOutputStream(ArchiveType.TAR.getCommonsCompressName(), fileOutputStream)) {
+
+            fileOutputStream.write(shellScript.getBytes(Charset.forName("UTF-8")));
+
+            archiveOutputStream.setLongFileMode(LONGFILE_GNU);
+
+
+            Files.walkFileTree(directoryToArchive, new SimpleFileVisitor<Path>() {
+                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    createAndPutArchiveEntry(ArchiveType.TAR, archiveOutputStream, directoryToArchive, file);
+                    archiveOutputStream.closeArchiveEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (Files.isSameFile(dir, directoryToArchive)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    TarArchiveEntry entry = archiveOutputStream.createArchiveEntry(dir.toFile(), getRelativePathString(dir, directoryToArchive));
                     archiveOutputStream.putArchiveEntry(entry);
                     archiveOutputStream.closeArchiveEntry();
                     return FileVisitResult.CONTINUE;
