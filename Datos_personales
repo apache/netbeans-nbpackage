@@ -1,0 +1,162 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class FormularioUsuario extends JFrame {
+
+    // Componentes
+    private JTextField txtNombre, txtPaterno, txtMaterno, txtEdad;
+    private JRadioButton rbtnMasculino, rbtnFemenino;
+    private JComboBox<String> comboMunicipio;
+    private JCheckBox chkInternet, chkLaptop, chkTelefono, chkTablet, chkTvPaga;
+    private JButton btnMostrar, btnLimpiar;
+    private ButtonGroup grupoSexo;
+    private JTextArea areaCartilla;
+
+    public FormularioUsuario() {
+        // Título de la ventana
+        setTitle("Formulario de Registro - Cartilla");
+        setSize(500, 600);
+        setLayout(new BorderLayout(10, 10));
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Panel principal (arriba)
+        JPanel panelFormulario = new JPanel();
+        panelFormulario.setLayout(new GridLayout(10, 2, 5, 5));
+
+        // Campos de texto
+        panelFormulario.add(new JLabel("Nombre:"));
+        txtNombre = new JTextField();
+        panelFormulario.add(txtNombre);
+
+        panelFormulario.add(new JLabel("Apellido Paterno:"));
+        txtPaterno = new JTextField();
+        panelFormulario.add(txtPaterno);
+
+        panelFormulario.add(new JLabel("Apellido Materno:"));
+        txtMaterno = new JTextField();
+        panelFormulario.add(txtMaterno);
+
+        panelFormulario.add(new JLabel("Edad:"));
+        txtEdad = new JTextField();
+        panelFormulario.add(txtEdad);
+
+        // Radio Buttons para el sexo
+        panelFormulario.add(new JLabel("Sexo:"));
+        JPanel panelSexo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rbtnMasculino = new JRadioButton("Masculino");
+        rbtnFemenino = new JRadioButton("Femenino");
+        grupoSexo = new ButtonGroup();
+        grupoSexo.add(rbtnMasculino);
+        grupoSexo.add(rbtnFemenino);
+        panelSexo.add(rbtnMasculino);
+        panelSexo.add(rbtnFemenino);
+        panelFormulario.add(panelSexo);
+
+        // ComboBox de municipio
+        panelFormulario.add(new JLabel("Municipio:"));
+        comboMunicipio = new JComboBox<>(new String[]{
+            "Ecatepec", "Nezahualcóyotl", "Toluca", "Naucalpan", "Tlalnepantla", "Chalco"
+        });
+        panelFormulario.add(comboMunicipio);
+
+        // CheckBoxes de servicios
+        panelFormulario.add(new JLabel("Servicios con los que cuenta:"));
+        JPanel panelServicios = new JPanel(new GridLayout(5, 1));
+        chkInternet = new JCheckBox("Internet");
+        chkLaptop = new JCheckBox("Laptop");
+        chkTelefono = new JCheckBox("Teléfono");
+        chkTablet = new JCheckBox("Tablet");
+        chkTvPaga = new JCheckBox("Televisión de paga");
+        panelServicios.add(chkInternet);
+        panelServicios.add(chkLaptop);
+        panelServicios.add(chkTelefono);
+        panelServicios.add(chkTablet);
+        panelServicios.add(chkTvPaga);
+        panelFormulario.add(panelServicios);
+
+        // Botones
+        btnMostrar = new JButton("Mostrar Cartilla");
+        btnLimpiar = new JButton("Limpiar");
+        panelFormulario.add(btnMostrar);
+        panelFormulario.add(btnLimpiar);
+
+        // Área de texto para mostrar la cartilla
+        areaCartilla = new JTextArea(10, 40);
+        areaCartilla.setEditable(false);
+        areaCartilla.setBorder(BorderFactory.createTitledBorder("Cartilla del Usuario"));
+        areaCartilla.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        JScrollPane scroll = new JScrollPane(areaCartilla);
+
+        // Agregar paneles al frame
+        add(panelFormulario, BorderLayout.NORTH);
+        add(scroll, BorderLayout.CENTER);
+
+        // Acción del botón Mostrar
+        btnMostrar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                mostrarCartilla();
+            }
+        });
+
+        // Acción del botón Limpiar
+        btnLimpiar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                limpiarCampos();
+            }
+        });
+    }
+
+    // Método para mostrar los datos en el área de texto
+    private void mostrarCartilla() {
+        String nombre = txtNombre.getText();
+        String paterno = txtPaterno.getText();
+        String materno = txtMaterno.getText();
+        String edad = txtEdad.getText();
+        String sexo = rbtnMasculino.isSelected() ? "Masculino" : (rbtnFemenino.isSelected() ? "Femenino" : "No especificado");
+        String municipio = comboMunicipio.getSelectedItem().toString();
+
+        String servicios = "";
+        if (chkInternet.isSelected()) servicios += "Internet, ";
+        if (chkLaptop.isSelected()) servicios += "Laptop, ";
+        if (chkTelefono.isSelected()) servicios += "Teléfono, ";
+        if (chkTablet.isSelected()) servicios += "Tablet, ";
+        if (chkTvPaga.isSelected()) servicios += "Televisión de paga, ";
+        if (servicios.isEmpty()) servicios = "Ninguno";
+        else servicios = servicios.substring(0, servicios.length() - 2);
+
+        // Mostrar en el área de texto tipo cartilla
+        areaCartilla.setText(
+                "=========== CARTILLA DEL USUARIO ===========\n" +
+                "Nombre: " + nombre + " " + paterno + " " + materno + "\n" +
+                "Edad: " + edad + "\n" +
+                "Sexo: " + sexo + "\n" +
+                "Municipio: " + municipio + "\n" +
+                "Servicios con los que cuenta:\n  → " + servicios.replace(", ", "\n  → ") +
+                "\n============================================"
+        );
+    }
+
+    // Método para limpiar todos los campos
+    private void limpiarCampos() {
+        txtNombre.setText("");
+        txtPaterno.setText("");
+        txtMaterno.setText("");
+        txtEdad.setText("");
+        grupoSexo.clearSelection();
+        comboMunicipio.setSelectedIndex(0);
+        chkInternet.setSelected(false);
+        chkLaptop.setSelected(false);
+        chkTelefono.setSelected(false);
+        chkTablet.setSelected(false);
+        chkTvPaga.setSelected(false);
+        areaCartilla.setText("");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new FormularioUsuario().setVisible(true);
+        });
+    }
+}
