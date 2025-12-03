@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+if ! [ $(id -u) = 0 ]; then
+   default_install_prefix=$HOME/.local
+   desktop_file_install_dir=$HOME/.local/share/applications
+else
+   default_install_prefix=/usr/local
+   desktop_file_install_dir=/usr/local/share/applications
+fi
+
+read -p "Enter ${package.tar.app_name} Install Prefix [${default_install_prefix}]/${package.tar.app_dir}: " install_prefix
+install_prefix=${install_prefix:-$default_install_prefix}
+install_path=${install_prefix}/${package.tar.app_dir}
+
+exec_path=${install_path}/bin/${package.tar.app_dir}
+launcher_path=${install_path}/launcher/${package.tar.app_dir}
+icon_path=${install_path}/launcher/${package.tar.app_dir}.svg
+desktop_path=${install_path}/launcher/${package.tar.app_dir}.desktop
+
+if [ ! -d ${install_path} ]; then
+    mkdir -p ${install_path}
+fi
+
+echo "Installing ${package.tar.app_name} in ${install_path}"
+tarfile=$(awk '/^__TARFILE_FOLLOWS__/ { print NR + 1; exit 0; }' $0)
+
+tail -n +${tarfile} $0 | tar x --strip-components=1 -C $install_path
+
+cat > ${launcher_path}  << "EOF"
+${package.tar.launcher}
+EOF
+
+chmod a+x ${launcher_path}
+
+sed -i 's/"JAVA_HOME"/"\$JAVA_HOME"/g' ${launcher_path}
+sed -i "s/_exec_path_/${exec_path//\//\\/}/g" ${launcher_path}
+sed -i "s/_install_path_/${install_path//\//\\/}/g" ${launcher_path}
+
+cat > ${desktop_path}  << EOF
+${package.tar.desktop}
+EOF
+
+desktop-file-install --dir=${desktop_file_install_dir} ${desktop_path}
+
+exit 0
+# NOTE: Don't place any newline characters after the last line below.
+__TARFILE_FOLLOWS__
