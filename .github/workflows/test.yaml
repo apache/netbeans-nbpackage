@@ -28,8 +28,8 @@ jobs:
     name: Build and test on ${{ matrix.os }}, JDK ${{ matrix.java }}
     strategy:
       matrix:
-        java: [ '17', '24' ]
-        os: [ 'ubuntu-24.04', 'windows-2022', 'macos-14' ]
+        java: [ '21', '25' ]
+        os: [ 'ubuntu-24.04', 'windows-2022', 'macos-15' ]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -49,20 +49,20 @@ jobs:
       run: ./mvnw --batch-mode --no-transfer-progress clean verify
 
     - name: Install Linux dependencies
-      if: matrix.os == 'ubuntu-24.04' && matrix.java == '24'
+      if: matrix.os == 'ubuntu-24.04' && matrix.java == '25'
       run : |
         sudo apt update
         sudo apt install rpm
 
     - name: Test packaging
-      if: matrix.java == '24'
+      if: matrix.java == '25'
       env:
           INNOSETUP_PATH: 'C:\\Program Files (x86)\\Inno Setup 6\\iscc.exe'
       run : java .github/scripts/PackageTest.java
 
     - name: Upload test package artefacts
-      uses: actions/upload-artifact@v5
-      if: matrix.java == '24'
+      uses: actions/upload-artifact@v6
+      if: matrix.java == '25'
       with:
         name: ${{ matrix.os }}-test
         path: "target/package-test/output/"
