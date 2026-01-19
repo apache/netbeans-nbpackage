@@ -58,16 +58,6 @@ public class AppImagePackager implements Packager {
                     MESSAGES.getString("option.category.help"));
 
     /**
-     * Architecture of AppImage to create. Defaults to parsing from appimagetool
-     * file name.
-     */
-    @Deprecated(forRemoval = true)
-    static final Option<String> APPIMAGE_ARCH
-            = Option.ofString("package.appimage.arch",
-                    MESSAGES.getString("option.arch.help"))
-                    .withStatus(Option.Status.DEPRECATED);
-    
-    /**
      * Optional path to custom .desktop template.
      */
     static final Option<Path> DESKTOP_TEMPLATE_PATH
@@ -80,7 +70,7 @@ public class AppImagePackager implements Packager {
     static final Template DESKTOP_TEMPLATE
             = Template.of(DESKTOP_TEMPLATE_PATH, "AppImage.desktop.template",
                     () -> AppImagePackager.class.getResourceAsStream("AppImage.desktop.template"));
-    
+
     /**
      * Optional path to custom AppRun launcher template.
      */
@@ -97,8 +87,8 @@ public class AppImagePackager implements Packager {
 
     private static final List<Option<?>> APPIMAGE_OPTIONS
             = List.of(APPIMAGE_TOOL, APPIMAGE_ICON, APPIMAGE_CATEGORY,
-                    APPIMAGE_ARCH, DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
-    
+                    DESKTOP_TEMPLATE_PATH, LAUNCHER_TEMPLATE_PATH);
+
     private static final List<Template> APPIMAGE_TEMPLATES
             = List.of(DESKTOP_TEMPLATE, LAUNCHER_TEMPLATE);
 

@@ -76,7 +76,6 @@ class AppImageTask extends AbstractPackagerTask {
                 AppImagePackager.MESSAGES.getString("message.noappimagetool")))
                 .toAbsolutePath();
         String arch = context().getValue(NBPackage.PACKAGE_ARCH)
-                .or(() -> context().getValue(AppImagePackager.APPIMAGE_ARCH))
                 .orElse(archFromAppImageTool(tool));
         String targetName = image.getFileName().toString();
         if (targetName.endsWith(".AppDir")) {
@@ -84,7 +83,7 @@ class AppImageTask extends AbstractPackagerTask {
         }
         targetName = targetName + "-" + arch + ".AppImage";
         Path target = context().destination().resolve(targetName);
-        List<String> cmd = List.of(tool.toString(), 
+        List<String> cmd = List.of(tool.toString(),
                 image.toAbsolutePath().toString(),
                 target.toString());
         ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -120,7 +119,7 @@ class AppImageTask extends AbstractPackagerTask {
     }
 
     private Path findLauncher(Path binDir) throws IOException {
-        try ( var files = Files.list(binDir)) {
+        try (var files = Files.list(binDir)) {
             return files.filter(f -> !f.getFileName().toString().endsWith(".exe"))
                     .findFirst().orElseThrow(IOException::new);
         }

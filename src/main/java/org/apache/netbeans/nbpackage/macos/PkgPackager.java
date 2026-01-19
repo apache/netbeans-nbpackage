@@ -35,7 +35,6 @@ public class PkgPackager implements Packager {
             MacOS.BUNDLE_ID,
             MacOS.ICON_PATH,
             MacOS.INFO_TEMPLATE_PATH,
-            MacOS.ARCH,
             MacOS.LAUNCHER_TEMPLATE_PATH,
             MacOS.ENTITLEMENTS_TEMPLATE_PATH,
             MacOS.SIGNING_FILES,
@@ -68,5 +67,5 @@ public class PkgPackager implements Packager {
     public Stream<Template> templates() {
         return PKG_TEMPLATE.stream();
     }
-    
+
 }
