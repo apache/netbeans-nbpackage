@@ -165,7 +165,6 @@ class AppBundleTask extends AbstractPackagerTask {
     String bundleArch() {
         if (bundleArch == null) {
             bundleArch = context().getValue(NBPackage.PACKAGE_ARCH)
-                    .or(() -> context().getValue(MacOS.ARCH))
                     .map(arch -> {
                         if (Architecture.X86_64.isSynonym(arch)) {
                             return ARCH_X86_64;
