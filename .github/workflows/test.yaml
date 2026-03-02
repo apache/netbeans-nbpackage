@@ -61,7 +61,7 @@ jobs:
       run : java .github/scripts/PackageTest.java
 
     - name: Upload test package artefacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       if: matrix.java == '25'
       with:
         name: ${{ matrix.os }}-test
