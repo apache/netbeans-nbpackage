@@ -25,10 +25,21 @@ github:
     issues: true
     projects: true
   enabled_merge_buttons:
-    squash:  false
-    merge:   true
-    rebase:  false
+    squash: false
+    merge: true
+    rebase: false
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
 notifications:
-    commits:      commits@netbeans.apache.org
-    issues:       notifications@netbeans.apache.org
-    pullrequests: notifications@netbeans.apache.org
+  commits: commits@netbeans.apache.org
+  issues: notifications@netbeans.apache.org
+  pullrequests: notifications@netbeans.apache.org
