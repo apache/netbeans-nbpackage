@@ -360,9 +360,16 @@ public abstract class AbstractPackagerTask implements Packager.Task {
 
     private void addRuntimeToConf(Path conf, String jdkhome) throws IOException {
         var contents = Files.readString(conf);
-        contents = contents.replace("#jdkhome=\"/path/to/jdk\"", "jdkhome=\"" + jdkhome + "\"");
-        // @TODO - fix this when relative links work with IDE launcher
-        // contents = contents.replace("#netbeans_jdkhome=\"/path/to/jdk\"", "netbeans_jdkhome=\"" + jdkhome + "\"");
+        // Point at the bundled JDK relative to the installation using the
+        // launcher's ${BASEDIR} token. Unlike passing --jdkhome via a shortcut,
+        // this resolves however the application is launched - eg. directly or
+        // via "Open With..." on a file. Forward slashes are tolerated on all
+        // platforms including Windows.
+        String basedirHome = "${BASEDIR}/" + jdkhome.replace('\\', '/');
+        contents = contents.replace("#jdkhome=\"/path/to/jdk\"",
+                "jdkhome=\"" + basedirHome + "\"");
+        contents = contents.replace("#netbeans_jdkhome=\"/path/to/jdk\"",
+                "netbeans_jdkhome=\"" + basedirHome + "\"");
         Files.writeString(conf, contents);
     }
 

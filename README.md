@@ -97,8 +97,9 @@ wine C:\\Program\ Files\ \(x86\)\\Inno\ Setup\ 6\\ISCC.exe $1
 ### `--type zip`
 
 Mainly for debugging purposes, although can be used to bundle an RCP application
-with local runtime. As the IDE launcher does not yet support relative JDK location,
-this is less useful there.
+with local runtime. When a runtime is bundled, the JDK location is written into
+`netbeans.conf` relative to the installation using the launcher's `${BASEDIR}`
+token, so it is found however the application is launched.
 
 ## Building from source
 

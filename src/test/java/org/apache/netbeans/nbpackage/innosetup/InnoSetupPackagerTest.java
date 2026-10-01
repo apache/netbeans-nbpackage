@@ -74,6 +74,11 @@ public class InnoSetupPackagerTest {
         assertTrue(Files.exists(resolve(image, "app", "bin", "app64.exe")));
         assertTrue(Files.exists(resolve(image, "app", "etc", "app.ico")));
         assertTrue(Files.exists(resolve(image, "app", "jdk", "bin", "java.exe")));
+        // bundled JDK is referenced in netbeans.conf relative to ${BASEDIR}, so
+        // it is found however the launcher is started (not just via a shortcut)
+        String conf = Files.readString(resolve(image, "app", "etc", "app.conf"));
+        assertTrue(conf.contains("jdkhome=\"${BASEDIR}/jdk\""));
+        assertTrue(conf.contains("netbeans_jdkhome=\"${BASEDIR}/jdk\""));
     }
 
 }
