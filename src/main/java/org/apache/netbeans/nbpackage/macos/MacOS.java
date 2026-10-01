@@ -119,6 +119,15 @@ class MacOS {
                     MESSAGES.getString("option.codesign_jars.help"));
 
     /**
+     * Whether to code sign the bundled JDK runtime. When {@code false}, the
+     * runtime's existing signatures are left untouched.
+     */
+    static final Option<Boolean> CODESIGN_RUNTIME
+            = Option.of("package.macos.codesign-runtime", Boolean.class, "true",
+                    Boolean::parseBoolean,
+                    MESSAGES.getString("option.codesign_runtime.help"));
+
+    /**
      * Codesign ID for signing binaries and app bundle.
      */
     static final Option<String> CODESIGN_ID

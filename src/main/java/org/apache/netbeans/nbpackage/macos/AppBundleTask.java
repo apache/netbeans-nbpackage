@@ -284,6 +284,14 @@ class AppBundleTask extends AbstractPackagerTask {
                 StandardOpenOption.CREATE_NEW);
         List<Path> nativeBinaries = FileUtils.find(bundle,
                 context().getValue(MacOS.SIGNING_FILES).orElseThrow());
+        if (!context().getValue(MacOS.CODESIGN_RUNTIME).orElse(Boolean.TRUE)) {
+            Path runtime = bundle.resolve("Contents").resolve("Home");
+            nativeBinaries = nativeBinaries.stream()
+                    .filter(path -> !path.startsWith(runtime))
+                    .toList();
+            context().infoHandler().accept(
+                    MacOS.MESSAGES.getString("message.skippingruntime"));
+        }
         Files.writeString(image.resolve(NATIVE_BIN_FILENAME),
                 nativeBinaries.stream()
                         .map(path -> image.relativize(path))
