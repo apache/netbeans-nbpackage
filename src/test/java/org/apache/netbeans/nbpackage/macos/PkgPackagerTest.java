@@ -90,6 +90,7 @@ public class PkgPackagerTest {
         assertTrue(Files.exists(resolve(app, "Contents", "Resources", "app", "bin", "app")));
         // runtime binaries are included in the signing list by default
         assertTrue(Files.readString(resolve(image, "nativeBinaries"))
+                .replace('\\', '/')
                 .contains("Contents/Home/bin/java"));
     }
 
@@ -116,6 +117,7 @@ public class PkgPackagerTest {
         assertTrue(Files.exists(resolve(app, "Contents", "Home", "bin", "java")));
         assertTrue(Files.exists(resolve(image, "nativeBinaries")));
         assertFalse(Files.readString(resolve(image, "nativeBinaries"))
+                .replace('\\', '/')
                 .contains("Contents/Home"));
     }
 
