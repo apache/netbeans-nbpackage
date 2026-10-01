@@ -49,7 +49,9 @@ public class TestUtils {
         Files.createFile(appBin.resolve(branding));
         Files.createFile(appBin.resolve(branding + ".exe"));
         Files.createFile(appBin.resolve(branding + "64.exe"));
-        Files.createFile(appEtc.resolve(branding + ".conf"));
+        Files.writeString(appEtc.resolve(branding + ".conf"),
+                "#jdkhome=\"/path/to/jdk\"\n"
+                + "#netbeans_jdkhome=\"/path/to/jdk\"\n");
         Files.createFile(platform.resolve("module"));
         return dir;
     }
