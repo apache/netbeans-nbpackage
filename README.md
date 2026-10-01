@@ -79,6 +79,12 @@ native binaries and JAR files with native binaries can be adapted if necessary.
 The built package should then pass the Apple notarization process (submission and
 stapling must be done manually).
 
+By default the bundled JDK runtime is also re-signed. This can be disabled by
+setting `package.macos.codesign-runtime` to `false`, so that the runtime's
+existing signatures are kept unchanged. This is useful where re-signing is
+unnecessary and causes problems, such as `jlink` reporting a modified runtime,
+but note it may affect notarization in some cases.
+
 ### `--type windows-innosetup`
 
 Create a Windows [Inno Setup][innosetup] installer. Requires download of the

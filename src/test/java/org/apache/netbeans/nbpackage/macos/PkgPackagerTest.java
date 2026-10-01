@@ -88,6 +88,37 @@ public class PkgPackagerTest {
         assertTrue(Files.exists(resolve(app, "Contents", "Home", "bin", "java")));
         assertTrue(Files.exists(resolve(app, "Contents", "Resources", "app.icns")));
         assertTrue(Files.exists(resolve(app, "Contents", "Resources", "app", "bin", "app")));
+        // runtime binaries are included in the signing list by default
+        assertTrue(Files.readString(resolve(image, "nativeBinaries"))
+                .replace('\\', '/')
+                .contains("Contents/Home/bin/java"));
+    }
+
+    @Test
+    public void testImageSkippingRuntimeSigning() throws Exception {
+        Path input = tmpDir.resolve("App-1.0-b1.zip");
+        FileUtils.createZipArchive(
+                buildFakeApp(tmpDir, "App-1.0-b1", "app"),
+                input);
+        String runtimeName = "OpenJDK24U-jdk_aarch64_mac_hotspot_24.0.1_9";
+        Path runtime = tmpDir.resolve(runtimeName + ".zip");
+        FileUtils.createZipArchive(
+                buildFakeJDK(tmpDir, runtimeName, false),
+                runtime);
+        Configuration config = Configuration.builder()
+                .set(NBPackage.PACKAGE_NAME, "App")
+                .set(NBPackage.PACKAGE_VERSION, "1.0-b1")
+                .set(NBPackage.PACKAGE_RUNTIME, runtime.toString())
+                .set(MacOS.CODESIGN_RUNTIME, "false")
+                .build();
+        Path image = buildImage(new PkgPackager(), input, config, tmpDir);
+        Path app = resolve(image, "App.app");
+        // runtime is still bundled, but excluded from the signing list
+        assertTrue(Files.exists(resolve(app, "Contents", "Home", "bin", "java")));
+        assertTrue(Files.exists(resolve(image, "nativeBinaries")));
+        assertFalse(Files.readString(resolve(image, "nativeBinaries"))
+                .replace('\\', '/')
+                .contains("Contents/Home"));
     }
 
 }
