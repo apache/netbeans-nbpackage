@@ -68,6 +68,10 @@ available on the system.
 Create a Linux RPM package. Requires `rpm` and `rpmbuild` to be available on the
 system.
 
+### `--type linux-tar-script`
+
+Create a Linux shell script installer with an embedded tar file.
+
 ### `--type macos-pkg`
 
 Create a macOS PKG installer. Requires `swift` to build the launcher, `codesign`

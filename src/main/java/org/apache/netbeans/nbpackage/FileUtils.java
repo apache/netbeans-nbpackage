@@ -108,6 +108,26 @@ public class FileUtils {
     }
 
     /**
+     * Create a tar file embedded in a shell script of the provided directory, maintaining file attributes.
+     * The destination file must not already exist.
+     *
+     * @param script the shell script
+     * @param directory directory to zip
+     * @param destination destination file (must not exist)
+     * @throws IOException
+     */
+    public static void createEmbeddedTarScript(String script, Path directory, Path destination) throws IOException {
+        if (Files.exists(destination)) {
+            throw new IOException(destination.toString());
+        }
+        try {
+            ArchiveUtils.createEmbeddedTarScript(script, directory, destination);
+        } catch (ArchiveException ex) {
+            throw new IOException(ex);
+        }
+    }
+
+    /**
      * Extract an archive into the given destination directory, maintaining file
      * attributes where possible. The destination directory must already exist.
      * Supports zip, tar and tar.gz archives. Limited support for other archive
@@ -217,7 +237,7 @@ public class FileUtils {
     public static List<Path> find(Path searchDir, String pattern) throws IOException {
         var matcher = searchDir.getFileSystem().getPathMatcher("glob:" + pattern);
         try (var stream = Files.find(searchDir, Integer.MAX_VALUE, (file, attr)
-                -> !file.equals(searchDir) && 
+                -> !file.equals(searchDir) &&
                         (matcher.matches(searchDir.relativize(file)) ||
                                 matcher.matches(file.getFileName()))
         )) {

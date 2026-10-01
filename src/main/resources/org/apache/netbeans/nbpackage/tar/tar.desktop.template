@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=${package.name}
+Exec=${launcher_path}
+Icon=${icon_path}
+Categories=${package.tar.category}
+Version=1.0
+Type=Application
+Terminal=false
+StartupWMClass=${package.name} ${package.version}
